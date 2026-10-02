@@ -43,7 +43,9 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		// desktop: "assets/images/DesktopWallpaper/d1.avif",
 		desktop: [
 			"assets/images/DesktopWallpaper/xueshan.webp",
-			"assets/images/DesktopWallpaper/玉龙雪山_日照金山.webp",
+			"assets/images/DesktopWallpaper/拾光_Windows聚焦_c71ded2207c5c403.webp",
+			"assets/images/DesktopWallpaper/拾光_Windows聚焦_044bdf8a23f7808d.webp",
+			"assets/images/DesktopWallpaper/拾光_Windows聚焦_b1d8c2ec7ddde10a.webp",
 
 		],
 		// 移动背景图片（支持单张或多张随机）
@@ -126,7 +128,7 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		// 壁纸轮播配置，横幅壁纸和全屏壁纸共享，仅在配置多张图片时生效
 		carousel: {
 			// 是否启用壁纸轮播；关闭时保持每次刷新随机显示一张
-			enable: false,
+			enable: true,
 			// 轮播切换间隔（毫秒）
 			interval: 5000,
 			// 过渡效果: 'fade' 渐变 | 'zoom' 缩放 | 'slide' 滑动 | 'kenburns' 旋转木马
