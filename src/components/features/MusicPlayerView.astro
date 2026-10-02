@@ -76,8 +76,11 @@ const viewConfigStr = JSON.stringify({
         document.addEventListener('keydown', go, true);
 
         function afterLoad() {
-            if (window.requestIdleCallback) window.requestIdleCallback(go, { timeout: 2000 });
-            else setTimeout(go, 800);
+            // 音乐播放器不是首屏关键内容，其初始化（构建播放列表 DOM + 渲染歌词）
+            // 在移动端慢 CPU 下是 TBT 的主要来源之一。延迟到首屏关键交互期（~6s）之后
+            // 再初始化，用户首次点击仍会通过 pointerdown 立即触发，交互不受影响。
+            if (window.requestIdleCallback) window.requestIdleCallback(go, { timeout: 6000 });
+            else setTimeout(go, 6000);
         }
         if (document.readyState === 'complete') afterLoad();
         else window.addEventListener('load', afterLoad, { once: true });
