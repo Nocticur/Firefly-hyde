@@ -155,15 +155,24 @@
 
 		private startAnimation(): void {
 			if (this.animationId !== null || !this.renderer) return;
+			// 帧率限制：水波纹是纯装饰，20fps 已足够平滑；每 3 个 rAF 才 draw 一帧，
+			// 配合 waves-draw.ts 的缓动查找表，把逐帧主线程开销降到最低（Lighthouse
+			// CPU 4x 节流下这是 mainthread-work / TBT 的主要来源之一）。视觉几乎无感知。
+			let frame = 0;
+			const FRAME_INTERVAL = 3; // ≈20fps
 			const animate = () => {
-				if (!this.renderer || !this.canvas) return;
-				try {
-					this.renderer.draw(performance.now(), this.startTime);
-					this.animationId = requestAnimationFrame(animate);
-				} catch (err) {
-					console.warn("[Waves] animate error:", err);
-					this.cancelAnimation();
+				frame++;
+				if (frame % FRAME_INTERVAL === 0) {
+					if (!this.renderer || !this.canvas) return;
+					try {
+						this.renderer.draw(performance.now(), this.startTime);
+					} catch (err) {
+						console.warn("[Waves] animate error:", err);
+						this.cancelAnimation();
+						return;
+					}
 				}
+				this.animationId = requestAnimationFrame(animate);
 			};
 			this.animationId = requestAnimationFrame(animate);
 		}

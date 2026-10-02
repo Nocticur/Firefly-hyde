@@ -1,1 +1,8 @@
-{}
+{
+	"shuaiplus/nodewarden": {
+		"description": "Bitwarden-compatible server running on Cloudflare Workers",
+		"language": "TypeScript",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/100134295?v=4",
+		"license": "NOASSERTION"
+	}
+}

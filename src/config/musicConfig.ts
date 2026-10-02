@@ -78,7 +78,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 				artist: "张震岳/大渊(顽童MJ116)",
 				url: "/assets/music/迷途羔羊.mp3",
 				cover:
-					"http://p1.music.126.net/b1eSBbx2Yia0k89ocfOnjQ==/18677404023325159.jpg?param=130y130",
+					"https://p1.music.126.net/b1eSBbx2Yia0k89ocfOnjQ==/18677404023325159.jpg?param=130y130",
 				lrc: "/assets/music/lrc/迷途羔羊.lrc",
 			},
 			{

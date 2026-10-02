@@ -37,8 +37,6 @@ const pages = resolvePageToggles({
 	devices: true,
 	// 日记页面开关
 	diary: true,
-	// 项目页面开关
-	projects: true,
 	// 时间线页面开关
 	timeline: true,
 	// 技能页面开关
@@ -278,7 +276,7 @@ export const siteConfig: SiteConfig = {
 	// 分页配置
 	pagination: {
 		// 每页显示的文章数量
-		postsPerPage: 10,
+		postsPerPage: 12,
 	},
 
 	// ── 文章内容页配置 ──────────────────────────────────

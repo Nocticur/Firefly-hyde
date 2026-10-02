@@ -7,6 +7,9 @@ export const announcementConfig: AnnouncementConfig = {
 	// 公告内容
 	content: "👋🏻 Hi，我是Hyde，欢迎您！",
 
+	// 是否启用动态公告接口 /api/public/announcements（当前无对应后端，开启会 404 报错，默认关闭仅用静态 content）
+	enableApi: false,
+
 	// 是否允许用户关闭公告
 	closable: false,
 

@@ -37,9 +37,29 @@ const wallpaperPosition = state.isFullscreenMode
          data-carousel-switchable={state.bannerCarouselSwitchable}
          data-carousel-interval={state.bannerCarouselInterval}
          data-carousel-effect={state.bannerCarouselEffect}>
-        {/* 图片放在 <template> 里，浏览器不会发起请求；由轮播脚本挑中随机那张后克隆进 DOM */}
-        {backgroundImages.mobile.map((src, index) => (
-            <div class:list={["slide-item block lg:hidden", index === 0 && "active"]} data-index={index}>
+        {/* 移动端首图静态渲染（不进 <template>）：浏览器解析期即发起下载，修复 LCP。
+            放弃“随机首图”，固定用第 0 张；其余图片仍留在 <template> 供可选轮播按需实例化。
+            桌面端首图仍走 <template>（仅 1 张，轮播脚本会以 high 优先级确定性实例化），
+            避免移动端白下一张 1920 大图。 */}
+        {backgroundImages.mobile.length > 0 && (
+            <div class="slide-item block lg:hidden active" data-index={0}>
+                <ImageWrapper
+                    alt="Mobile background image of the blog"
+                    class="object-cover h-full w-full"
+                    src={backgroundImages.mobile[0]}
+                    position={wallpaperPosition}
+                    width={828}
+                    widths={[640, 828]}
+                    sizes="100vw"
+                    loading="eager"
+                    fetchpriority="high"
+                    fadeIn={false}
+                    quality={state.mobileQuality}
+                />
+            </div>
+        )}
+        {backgroundImages.mobile.slice(1).map((src, index) => (
+            <div class="slide-item block lg:hidden" data-index={index + 1}>
                 <template>
                     <ImageWrapper
                         alt="Mobile background image of the blog"
@@ -55,8 +75,29 @@ const wallpaperPosition = state.isFullscreenMode
                 </template>
             </div>
         ))}
-        {backgroundImages.desktop.map((src, index) => (
-            <div class:list={["slide-item hidden lg:block", index === 0 && "active"]} data-index={index}>
+        {/* 桌面端首图静态渲染（不进 <template>）：同移动端，请求在初始 HTML 中即可发现
+            （requestDiscoverable:true），修复 Lighthouse 因"壁纸在 template 里需 JS 实例化"
+            而把 LCP 记成 9.6s 的 artifact（真实分解仅 ~620ms）。代价：移动端会多下一张
+            桌面壁纸（1920w 下 92KB webp，浏览器按 sizes=100vw 选 1280w 版本），可接受。 */}
+        {backgroundImages.desktop.length > 0 && (
+            <div class="slide-item hidden lg:block active" data-index={0}>
+                <ImageWrapper
+                    alt="Desktop background image of the blog"
+                    class="object-cover h-full"
+                    src={backgroundImages.desktop[0]}
+                    position={wallpaperPosition}
+                    width={1920}
+                    widths={[1280, 1920]}
+                    sizes="100vw"
+                    loading="eager"
+                    fetchpriority="high"
+                    fadeIn={false}
+                    quality={state.configQuality}
+                />
+            </div>
+        )}
+        {backgroundImages.desktop.slice(1).map((src, index) => (
+            <div class="slide-item hidden lg:block" data-index={index + 1}>
                 <template>
                     <ImageWrapper
                         alt="Desktop background image of the blog"
@@ -410,9 +451,10 @@ const wallpaperPosition = state.isFullscreenMode
                 }
             });
 
-            // 随机首张：只有被抽中的这一张会真的下载，其余仍留在 <template> 里
+            // 放弃随机首图：首图固定为第 0 张（移动端第 0 张已静态渲染为 eager 高优先级图，
+            // 桌面端第 0 张仍由下方 materialize(high) 确定性实例化）
             var slides = getVisibleSlides();
-            var startIdx = slides.length > 1 ? Math.floor(Math.random() * slides.length) : 0;
+            var startIdx = 0;
             var firstSlide = slides[startIdx];
             // .slide-item 自带 1000ms 的 opacity 过渡，首张不该吃它（它是 LCP 元素）。
             // 必须在下面加 active 之前就关掉，否则过渡已经启动了。

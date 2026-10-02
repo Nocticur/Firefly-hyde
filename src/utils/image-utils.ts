@@ -44,6 +44,16 @@ export function processCoverImageSync(
 		return image;
 	}
 
+	// 本地封面图池优先：按 seed 确定性挑选一张，避免远程请求
+	if (
+		randomCoverImage.enable &&
+		randomCoverImage.localPool &&
+		randomCoverImage.localPool.length > 0
+	) {
+		const hash = getSeedHash(seed);
+		return randomCoverImage.localPool[hash % randomCoverImage.localPool.length];
+	}
+
 	if (
 		!randomCoverImage.enable ||
 		!randomCoverImage.apis ||
@@ -67,10 +77,24 @@ export function getApiUrlList(
 	image: string | undefined,
 	seed?: string,
 ): string[] {
-	if (image !== "api" || !randomCoverImage.enable || !randomCoverImage.apis) {
+	if (image !== "api" || !randomCoverImage.enable) {
 		return [];
 	}
 
+	// 本地封面图池：以 seed 为起点轮转整池，形成客户端重试链（第一张即主封面）
+	if (randomCoverImage.localPool && randomCoverImage.localPool.length > 0) {
+		const n = randomCoverImage.localPool.length;
+		const start = getSeedHash(seed) % n;
+		const list: string[] = [];
+		for (let i = 0; i < n; i++) {
+			list.push(randomCoverImage.localPool[(start + i) % n]);
+		}
+		return list;
+	}
+
+	if (!randomCoverImage.apis) {
+		return [];
+	}
 	const hash = getSeedHash(seed);
 	return randomCoverImage.apis.map((api) => appendSeedParam(api, hash));
 }

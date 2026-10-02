@@ -338,6 +338,17 @@ const coverPositionClass =
     gap: 1rem;
   }
 
+  /* 性能优化：跳过视口外卡片的布局与绘制（content-visibility: auto）。
+     首屏 banner 占满视口，文章卡片几乎都在折叠线以下；跳过它们的首次布局可大幅削减
+     HTML 解析期的 (program) 长任务（实测最大单任务 ~465ms 主要来自全量卡片布局），
+     同时离屏封面图不再提前解码。视口内（含 50vh 邻近区）卡片照常渲染，LCP 不受影响。
+     contain-intrinsic-size 的 auto 关键字会在首次渲染后记住真实高度，滚动条几乎无跳动。
+     注意：若未来启用 masonry（JS 读 offsetHeight 布局），需在 masonry 模式下移除此规则。 */
+  .post-card-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 480px;
+  }
+
   /* 移动端列表模式下缩小元数据 */
   @media (max-width: 767px) {
     .list-mode .post-meta-root {

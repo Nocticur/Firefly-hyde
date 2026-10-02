@@ -2,7 +2,7 @@
 title: NodeWarden
 published: 2026-09-17
 pinned: false
-image: api
+image: "images/xueshan.webp"
 
 slug: /nodewarden
 tags: ["Cloudflare Workers", "NodeWarden"]

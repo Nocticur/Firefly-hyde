@@ -131,7 +131,6 @@ export type SiteConfig = {
 	momentsCover?: {
 		enable: boolean;
 		image?: string;
-		projects: boolean; // 项目展示页开关
 	};
 
 	// 分类导航栏开关

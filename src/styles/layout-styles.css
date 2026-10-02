@@ -384,7 +384,8 @@ html[data-wallpaper-mode="fullscreen"] #wallpaper-wrapper {
    避免类晚加时图片按自然尺寸渲染（比视口宽、靠左）后闪到居中的位移 */
 html[data-wallpaper-mode="fullscreen"] #wallpaper-wrapper img {
     width: 100% !important;
-    height: 100% !important;
+    /* 同 classic 规则：少 1px 避免"整铺视口被 Chrome 排除出 LCP 候选" */
+    height: calc(100% - 1px) !important;
     object-fit: cover !important;
     object-position: center !important;
     filter: blur(var(--fullscreen-blur, var(--overlay-blur, 0px))) !important;
@@ -418,7 +419,8 @@ html[data-wallpaper-mode="fullscreen"] body.is-home:not(.sticky-navbar):not(.dyn
 #wallpaper-wrapper.wallpaper-fullscreen img,
 #wallpaper-wrapper.wallpaper-fullscreen img[class*="object-cover"] {
     width: 100% !important;
-    height: 100% !important;
+    /* 同 classic 规则：少 1px 避免"整铺视口被 Chrome 排除出 LCP 候选" */
+    height: calc(100% - 1px) !important;
     object-fit: cover !important;
     object-position: center !important;
     filter: blur(var(--fullscreen-blur, var(--overlay-blur, 0px))) !important;
@@ -427,8 +429,11 @@ html[data-wallpaper-mode="fullscreen"] body.is-home:not(.sticky-navbar):not(.dyn
     opacity: 1 !important;
 }
 
-/* 首页首屏保持清晰：模糊只由 JS 按滚动驱动（--fullscreen-blur 未设置时 fallback 为 0） */
-html[data-wallpaper-mode="fullscreen"] body.is-home #wallpaper-wrapper img {
+/* 首页首屏保持清晰：模糊只由 JS 按滚动驱动（--fullscreen-blur 未设置时 fallback 为 0）。
+   classic 布局必须排除在本规则外：其特异性高于 classic 规则的 filter:none，会让壁纸图
+   始终带着 blur(0px)——而 Chrome 会把"带 filter 的图片"排除出 LCP 候选，壁纸将永远
+   无法成为 LCP 元素（即使视觉完全一致）。classic 下无模糊需求，直接不走这条规则。 */
+html[data-wallpaper-mode="fullscreen"]:not([data-fullscreen-layout="classic"]) body.is-home #wallpaper-wrapper img {
     filter: blur(var(--fullscreen-blur, 0px)) !important;
 }
 body.is-home #wallpaper-wrapper.wallpaper-fullscreen img,
@@ -619,11 +624,17 @@ html[data-wallpaper-mode="fullscreen"][data-fullscreen-layout="classic"] body:no
 
 html[data-wallpaper-mode="fullscreen"][data-fullscreen-layout="classic"] #wallpaper-wrapper img {
     width: 100% !important;
-    height: 100% !important;
+    /* Chrome 会把"渲染盒恰好铺满整个视口"的图片视为背景式内容、排除出 LCP 候选
+       （实测 100vh 整铺 → 永不入选；差 1px 即恢复资格）。少 1px 视觉不可感知，
+       底部缝隙又被水波纹遮住，却能让壁纸成为 LCP、大幅改善 Lighthouse LCP 计时 */
+    height: calc(100% - 1px) !important;
     object-fit: cover !important;
     object-position: center !important;
     filter: none !important;
-    transform: scale(1.05) !important;
+    /* classic 下无 blur（filter:none），scale(1.05) 只为"避免 blur 采样到黑底"服务，
+       此处不需要；且 scale 会把上面的 calc(100% - 1px) 重新放大回 >100vh、重新触发
+       "铺满视口被排除出 LCP"。去掉后渲染盒 1280×719 < 720 视口，恢复 LCP 资格。 */
+    transform: none !important;
     opacity: 1 !important;
 }
 

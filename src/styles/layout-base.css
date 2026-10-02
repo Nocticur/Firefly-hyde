@@ -23,6 +23,19 @@
     display: none;
   }
 
+  /* 性能优化：#mobile-bottom-sidebar 承载移动端全部侧栏 widget（约 212KB HTML，
+     占首页 40%，全部在折叠线以下），跳过其视口外布局/绘制可大幅削减解析期 (program) 长任务。
+     桌面端该容器为 display:none，规则无副作用；site-footer 无浮层弹窗，paint 包裹不会裁切内容。
+     contain-intrinsic-size 的 auto 关键字在首次渲染后记住真实高度，滚动条几乎无跳动。 */
+  #mobile-bottom-sidebar {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2000px;
+  }
+  .site-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+
   @media (min-width: 768px) {
     #main-grid {
       grid-template-columns: var(--cols-md, 1fr);

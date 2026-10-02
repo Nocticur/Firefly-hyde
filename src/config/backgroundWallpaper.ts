@@ -2,9 +2,12 @@ import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
 
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 全屏透明，"none" 纯色背景无壁纸
-	mode: "fullscreen",
+	mode: "banner",
 	// 是否启用背景视频播放，配置后将在导航栏显示视频播放按钮
-	playerEnable: true,
+	// 注意：旧远程视频地址 https://t.alcy.cc/acgapi/acg/ndmz.mp4 已失效(404)，改为本地视频前先保持关闭，
+	// 避免无意义的远程请求。如需背景视频：把 mp4 放到 public/assets/videos/ 下，
+	// 将下方 playerUrl 设为 "/assets/videos/xxx.mp4" 并把此项改回 true 即可。
+	playerEnable: false,
 	/**
 	 * 背景图片配置
 	 * 图片路径支持三种格式：
@@ -39,7 +42,7 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		// 桌面背景图片（支持单张或多张随机）
 		// desktop: "assets/images/DesktopWallpaper/d1.avif",
 		desktop: [
-			"assets/images/DesktopWallpaper/zhonglou.webp",
+			"assets/images/DesktopWallpaper/xueshan.webp",
 			// "assets/images/DesktopWallpaper/d1.avif",
 			// "assets/images/DesktopWallpaper/d2.avif",
 			// "assets/images/DesktopWallpaper/d3.avif",
@@ -61,10 +64,10 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		// 支持单个视频路径（字符串）或多个视频循环（数组，参考上面壁纸配置）
 		// 支持远程视频URL，本地视频请放在 public/assets/videos/ 目录下
 		// playerUrl: "/assets/videos/firefly.mp4",
-		playerUrl: [
-			// "https://resource-ai.helplook.net/docker_production/4lkf7aju/faq/files/6a36dfc116662.mp4",
-			"https://t.alcy.cc/acgapi/acg/ndmz.mp4",
-		],
+		// 旧远程地址 https://t.alcy.cc/acgapi/acg/ndmz.mp4 已 404，已移除；
+		// 本地视频示例（放入 public/assets/videos/ 后取消注释并配合上方 playerEnable: true）：
+		// playerUrl: ["/assets/videos/background.mp4"],
+		playerUrl: [],
 	},
 	// 横幅壁纸和全屏壁纸共享配置
 	common: {
@@ -139,7 +142,9 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 				// 桌面端是否启用水波纹动画效果
 				desktop: true,
 				// 移动端是否启用水波纹动画效果
-				mobile: true,
+				// （移动端慢 CPU 下逐帧 canvas 动画是 TBT 的主要来源，改为 false 以换取性能，
+				//   关闭后移动端自动降级为渐变过渡效果）
+				mobile: false,
 			},
 		},
 		// 渐变过渡效果配置，当水波纹关闭时自动启用，提供壁纸底部到背景色的平滑过渡

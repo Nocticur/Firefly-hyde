@@ -130,6 +130,14 @@ const managerConfigStr = JSON.stringify({
     }
 
     // ── Meting fetch ─────────────────────────────────────────
+    // 混用 http 的封面/音频/歌词统一升级为 https，避免混合内容被浏览器拦截（Lighthouse Best Practices）
+    function httpsify(u) {
+        if (typeof u === 'string' && u.indexOf('http://') === 0) {
+            return 'https://' + u.slice(7);
+        }
+        return u || '';
+    }
+
     async function fetchMetingData() {
         if (!config.meting) return;
         var m = config.meting;
@@ -155,9 +163,9 @@ const managerConfigStr = JSON.stringify({
                         return {
                             name: item.title || item.name || 'Unknown',
                             artist: item.author || item.artist || 'Unknown',
-                            url: item.url,
-                            pic: item.pic || item.cover || '',
-                            lrc: item.lrc
+                            url: httpsify(item.url),
+                            pic: httpsify(item.pic || item.cover),
+                            lrc: httpsify(item.lrc)
                         };
                     });
                     return;
