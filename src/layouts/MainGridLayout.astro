@@ -180,6 +180,9 @@ const {
 
 <FloatingControls headings={headings} encrypted={encrypted} />
 
+{/* 首页欢迎提示弹窗：SSR 按首页门控，非首页不下发该脚本（组件内仍有 pathname 兜底判断） */}
+{isHomePageCheck && <WelcomeToast />}
+
 <!-- 移动端导航抽屉：渲染为 <body> 直系子元素，脱离导航栏的 transform 包含块才能铺满视口 -->
 <NavMenuPanel links={resolveNavMenuLinks()} />
 

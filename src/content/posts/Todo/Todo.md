@@ -2,7 +2,7 @@
 title: 待办
 published: 2026-05-09
 pinned: true # 固定在顶部
-image: api
+image: "../images/xueshan.webp"
 slug: /todo
 tags: ["Astro"]
 category: Firefly

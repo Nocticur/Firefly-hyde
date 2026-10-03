@@ -3,8 +3,22 @@
 ---
 
 <script>
-    // const VISIT_SESSION_KEY = 'blog_visit_flag';
+    const VISIT_SESSION_KEY = 'blog_visit_flag';
     let hasShownToast = false;
+
+    function hasVisitedThisSession() {
+        try {
+            return sessionStorage.getItem(VISIT_SESSION_KEY) === '1';
+        } catch {
+            return false; // 隐私模式等 sessionStorage 不可用时按未访问处理
+        }
+    }
+
+    function markVisitedThisSession() {
+        try {
+            sessionStorage.setItem(VISIT_SESSION_KEY, '1');
+        } catch { /* 静默跳过 */ }
+    }
 
     function createWelcomeToast() {
         const toast = document.createElement('div');
@@ -70,16 +84,20 @@
     }
 
     async function showWelcomeToast() {
-        if (hasShownToast) return;
+        if (hasShownToast || hasVisitedThisSession()) return;
         const toast = createWelcomeToast();
         setTimeout(() => {
             toast.classList.remove('translate-y-full', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
         }, 100);
         hasShownToast = true;
+        markVisitedThisSession();
         // 延迟到浏览器空闲时再请求第三方 IP 定位接口，避免与首屏关键资源抢带宽
         const schedule = window.requestIdleCallback || function (cb) { return setTimeout(cb, 300); };
-        schedule(() => { fetchLocation(); });
+        schedule(() => {
+            // 用户已提前关闭 toast 时跳过第三方请求，避免无效调用
+            if (document.getElementById('welcome-toast')) fetchLocation();
+        });
         setTimeout(() => { closeWelcomeToast(); }, 5000);
     }
 
