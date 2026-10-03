@@ -607,8 +607,14 @@ const postUrlPrefix = url("/posts/");
       }
   }
   
-  // 页面加载时渲染日历
-  initCalendar();
+  // 页面加载时渲染日历：延迟到空闲再初始化。日历是侧栏 widget（首屏折叠线以下），
+  // 它同步的 fetch(/api/allPostMeta.json) + 构建日历 DOM 是首屏 TBT 的来源之一，
+  // 移到 requestIdleCallback 后，首屏关键路径不再被它抢占。
+  const scheduleCalendarInit = () => {
+    (window.requestIdleCallback || ((cb) => setTimeout(cb, 200)))(initCalendar);
+  };
+  if (document.readyState === "complete") scheduleCalendarInit();
+  else window.addEventListener("load", scheduleCalendarInit, { once: true });
 
   // 防止 Swup 切页重跑脚本时重复注册监听器（此脚本的 data-swup-ignore-script 在 define:vars 构建时可能丢失）
   if (!window.__calendarInit) {

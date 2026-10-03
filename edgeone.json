@@ -1,11 +1,20 @@
 {
-  "$schema": "https://pages.edgeone.ai/document/edgeone-json-schema",
+  "$schema": "https://cdnstatic.tencentcs.com/edgeone/pages/docs/edgeone.schema.json",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "nodeVersion": "22.11.0",
   "headers": [
     {
-      "source": "/*",
+      "source": "/",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=86400" }
+      ]
+    },
+    {
+      "source": "/**",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
@@ -13,34 +22,28 @@
       ]
     },
     {
-      "source": "/_astro/*",
+      "source": "/_astro/**",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "source": "/assets/*",
+      "source": "/assets/**",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "source": "/images/*",
+      "source": "/images/**",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "source": "/music/*",
+      "source": "/music/**",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
-  ],
-  "caches": [
-    { "source": "/", "cacheTtl": 86400 },
-    { "source": "/robots.txt", "cacheTtl": 604800 },
-    { "source": "/sitemap-index.xml", "cacheTtl": 86400 },
-    { "source": "/**", "cacheTtl": 86400 }
   ]
 }
