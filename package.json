@@ -88,8 +88,8 @@
     "stylus": "^0.64.0",
     "svelte": "^5.57.0",
     "tailwindcss": "^4.3.3",
-    "three": "^0.185.1",
     "takumi-js": "^2.13.7",
+    "three": "^0.185.1",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "unist-util-visit": "^5.1.0",
@@ -98,6 +98,7 @@
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.11",
     "@biomejs/biome": "2.5.12",
+    "@iconify-json/logos": "^1.2.15",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/mi": "^1.2.2",
     "@iconify-json/svg-spinners": "^1.2.4",

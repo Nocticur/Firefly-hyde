@@ -46,9 +46,9 @@ export const profileConfig: ProfileConfig = {
 			showName: false,
 		},
 		{
-			name: "Telegram",
-			icon: "fa7-brands:telegram",
-			url: "https://t.me/seasir_Bot",
+			name: "Tiktok",
+			icon: "logos:tiktok-icon",
+			url: "https://www.douyin.com/user/MS4wLjABAAAAoIBlbHDCTxYvAj6GIPv_n3ntPDrzrrulI_mi-okG_TM?from_tab_name=main",
 			showName: false,
 		},
 	],

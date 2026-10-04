@@ -48,35 +48,170 @@ const { class: className, style } = Astro.props;
       </div>
     </div>
 
-    <div class="holiday-section mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
-      <div class="text-center">
-        <p class="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-0 nearest-holiday-full">&#36317;&#31163; --</p>
-        <p class="text-4xl font-bold text-(--primary) mb-2 nearest-holiday-days">--</p>
-        <p class="text-xs text-neutral-500 dark:text-neutral-400 nearest-holiday-date">--</p>
+    <div class="milestone" aria-live="polite">
+      <span class="milestone-label">距离下一站</span>
+      <strong class="milestone-name text-neutral-800 dark:text-neutral-100">--</strong>
+      <div class="milestone-count">
+        <span class="milestone-days">--</span>
+        <small>天</small>
       </div>
+      <time class="milestone-date" datetime="">----</time>
     </div>
   </div>
 </WidgetLayout>
 
 <script>
   (function () {
-    const holidays = [
-      { name: "\u5143\u65e6", month: 0, day: 1 },
-      { name: "\u6e05\u660e", month: 3, day: 4 },
-      { name: "\u52b3\u52a8\u8282", month: 4, day: 1 },
-      { name: "\u7aef\u5348", month: 5, day: 19 },
-      { name: "\u4e2d\u79cb", month: 8, day: 25 },
-      { name: "\u56fd\u5e86", month: 9, day: 1 },
+    // 公历固定节日（kind: 国内 / 传统 / 国际）
+    const fixedFestivals = [
+      { name: "元旦", month: 0, day: 1, kind: "国内" },
+      { name: "情人节", month: 1, day: 14, kind: "国际" },
+      { name: "妇女节", month: 2, day: 8, kind: "国际" },
+      { name: "植树节", month: 2, day: 12, kind: "国内" },
+      { name: "圣帕特里克节", month: 2, day: 17, kind: "国际" },
+      { name: "愚人节", month: 3, day: 1, kind: "国际" },
+      { name: "劳动节", month: 4, day: 1, kind: "国际" },
+      { name: "青年节", month: 4, day: 4, kind: "国内" },
+      { name: "儿童节", month: 5, day: 1, kind: "国际" },
+      { name: "建党节", month: 6, day: 1, kind: "国内" },
+      { name: "美国独立日", month: 6, day: 4, kind: "国际" },
+      { name: "建军节", month: 7, day: 1, kind: "国内" },
+      { name: "教师节", month: 8, day: 10, kind: "国内" },
+      { name: "国庆节", month: 9, day: 1, kind: "国内" },
+      { name: "万圣夜", month: 9, day: 31, kind: "国际" },
+      { name: "双十一", month: 10, day: 11, kind: "国内" },
+      { name: "平安夜", month: 11, day: 24, kind: "国际" },
+      { name: "圣诞节", month: 11, day: 25, kind: "国际" },
+      { name: "跨年夜", month: 11, day: 31, kind: "国际" },
     ];
 
-    const formatDate = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
+    // 农历节日（month/day 为农历月日，运行时经 Intl 推算公历日期）
+    const lunarFestivals = [
+      { name: "春节", month: 1, day: 1 },
+      { name: "元宵节", month: 1, day: 15 },
+      { name: "龙抬头", month: 2, day: 2 },
+      { name: "端午节", month: 5, day: 5 },
+      { name: "七夕节", month: 7, day: 7 },
+      { name: "中元节", month: 7, day: 15 },
+      { name: "中秋节", month: 8, day: 15 },
+      { name: "重阳节", month: 9, day: 9 },
+      { name: "腊八节", month: 12, day: 8 },
+      { name: "小年", month: 12, day: 23 },
+    ];
+
+    const dayMs = 86400000;
+    const lunarFormatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+      month: "numeric",
+      day: "numeric",
+    });
+
+    interface Festival {
+      name: string;
+      date: Date;
+      kind: string;
+    }
+
+    // 两个日期的天数差（按 UTC 日界，跨夏令时安全）
+    const daysBetween = (from: Date, to: Date): number => {
+      const fromUtc = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+      const toUtc = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+      return Math.max(0, Math.ceil((toUtc - fromUtc) / dayMs));
     };
 
-    const formatFullDate = (date) => {
+    const nthWeekdayOfMonth = (year: number, month: number, weekday: number, nth: number): Date => {
+      const first = new Date(year, month, 1);
+      const offset = (weekday - first.getDay() + 7) % 7;
+      return new Date(year, month, 1 + offset + (nth - 1) * 7);
+    };
+
+    // 西方复活节（匿名格里高利算法）
+    const westernEaster = (year: number): Date => {
+      const a = year % 19;
+      const b = Math.floor(year / 100);
+      const c = year % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const month = Math.floor((h + l - 7 * m + 114) / 31);
+      const day = ((h + l - 7 * m + 114) % 31) + 1;
+      return new Date(year, month - 1, day);
+    };
+
+    const getLunarMonthDay = (date: Date): { month: number; day: number } => {
+      const parts = lunarFormatter.formatToParts(date);
+      return {
+        month: Number(parts.find((part) => part.type === "month")?.value),
+        day: Number(parts.find((part) => part.type === "day")?.value),
+      };
+    };
+
+    // 收集今天起 400 天内的所有节日（公历 + 浮动 + 农历 + 除夕），升序去重
+    const collectFestivals = (now: Date): Festival[] => {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const festivals: Festival[] = [];
+
+      for (const year of [start.getFullYear(), start.getFullYear() + 1]) {
+        for (const item of fixedFestivals) {
+          festivals.push({
+            name: item.name,
+            date: new Date(year, item.month, item.day),
+            kind: item.kind,
+          });
+        }
+
+        festivals.push(
+          { name: "复活节", date: westernEaster(year), kind: "国际" },
+          { name: "母亲节", date: nthWeekdayOfMonth(year, 4, 0, 2), kind: "国际" },
+          { name: "父亲节", date: nthWeekdayOfMonth(year, 5, 0, 3), kind: "国际" },
+          { name: "感恩节", date: nthWeekdayOfMonth(year, 10, 4, 4), kind: "国际" },
+        );
+      }
+
+      for (let offset = 0; offset <= 400; offset += 1) {
+        const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset, 12);
+        const lunar = getLunarMonthDay(date);
+        const festival = lunarFestivals.find((item) => item.month === lunar.month && item.day === lunar.day);
+
+        if (festival) {
+          festivals.push({
+            name: festival.name,
+            date: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+            kind: "传统",
+          });
+        }
+
+        // 明天是春节 → 今天是除夕
+        const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 12);
+        const tomorrowLunar = getLunarMonthDay(tomorrow);
+        if (tomorrowLunar.month === 1 && tomorrowLunar.day === 1) {
+          festivals.push({
+            name: "除夕",
+            date: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+            kind: "传统",
+          });
+        }
+      }
+
+      const unique = new Map<string, Festival>();
+      for (const festival of festivals) {
+        const key = `${festival.name}-${festival.date.getFullYear()}-${festival.date.getMonth()}-${festival.date.getDate()}`;
+        unique.set(key, festival);
+      }
+
+      return [...unique.values()]
+        .filter((festival) => festival.date >= start)
+        .sort((a: Festival, b: Festival) => a.date.getTime() - b.date.getTime());
+    };
+
+    const findNextMilestone = (now: Date): Festival => collectFestivals(now)[0];
+
+    const formatFullDate = (date: Date): string => {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       const day = date.getDate();
@@ -85,27 +220,7 @@ const { class: className, style } = Astro.props;
       return `${year}\u5e74${month}\u6708${day}\u65e5 ${weekDay}`;
     };
 
-    const getNearestHoliday = (now) => {
-      const year = now.getFullYear();
-      const dates = holidays
-        .map((holiday) => ({
-          name: holiday.name,
-          date: new Date(year, holiday.month, holiday.day),
-        }))
-        .concat({ name: "\u5143\u65e6", date: new Date(year + 1, 0, 1) })
-        .filter((holiday) => holiday.date >= now)
-        .sort((a, b) => a.date - b.date);
-
-      const nearest = dates[0];
-      const days = Math.ceil((nearest.date - now) / 86400000);
-      return {
-        name: nearest.name,
-        days: days === 0 ? "\u4eca\u5929" : String(days),
-        date: formatDate(nearest.date),
-      };
-    };
-
-    const setText = (container, selector, value) => {
+    const setText = (container: Element, selector: string, value: string): void => {
       const element = container.querySelector(selector);
       if (element) element.textContent = value;
     };
@@ -120,7 +235,7 @@ const { class: className, style } = Astro.props;
       const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
       const daysInYear = isLeapYear ? 366 : 365;
       const startOfYear = new Date(year, 0, 0);
-      const yearPassedDays = Math.floor((now - startOfYear) / 86400000);
+      const yearPassedDays = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
       const yearDaysLeft = daysInYear - yearPassedDays;
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -132,7 +247,10 @@ const { class: className, style } = Astro.props;
       const seconds = now.getSeconds();
       const hoursLeft = Math.round((24 * 60 * 60 - hours * 60 * 60 - minutes * 60 - seconds) / 3600);
 
-      const nearestHoliday = getNearestHoliday(now);
+      const nextMilestone = findNextMilestone(now);
+      const milestoneDays = daysBetween(now, nextMilestone.date);
+      const milestoneDate = `${nextMilestone.date.getFullYear()}-${String(nextMilestone.date.getMonth() + 1).padStart(2, "0")}-${String(nextMilestone.date.getDate()).padStart(2, "0")}`;
+      const isMilestoneToday = milestoneDays === 0;
 
       document.querySelectorAll(".schedule-container").forEach((container) => {
         const yearProgress = ((yearPassedDays / daysInYear) * 100).toFixed(1);
@@ -140,9 +258,9 @@ const { class: className, style } = Astro.props;
         const weekProgress = ((weekDay / 7) * 100).toFixed(1);
         const dayProgress = ((hoursLeft / 24) * 100).toFixed(1);
 
-        const pBarYear = container.querySelector(".pBar_year");
-        const pBarMonth = container.querySelector(".pBar_month");
-        const pBarWeek = container.querySelector(".pBar_week");
+        const pBarYear = container.querySelector<HTMLProgressElement>(".pBar_year");
+        const pBarMonth = container.querySelector<HTMLProgressElement>(".pBar_month");
+        const pBarWeek = container.querySelector<HTMLProgressElement>(".pBar_week");
 
         if (pBarYear) {
           pBarYear.max = daysInYear;
@@ -154,7 +272,7 @@ const { class: className, style } = Astro.props;
         }
         if (pBarWeek) pBarWeek.value = weekDay;
 
-        const pBarDay = container.querySelector(".pBar_day");
+        const pBarDay = container.querySelector<HTMLProgressElement>(".pBar_day");
         if (pBarDay) {
           pBarDay.value = hoursLeft;
         }
@@ -168,14 +286,22 @@ const { class: className, style } = Astro.props;
         setText(container, ".month-days-left", `\u672c\u6708\u8fd8\u5269 ${monthDaysLeft} \u5929`);
         setText(container, ".week-days-left", `\u672c\u5468\u8fd8\u5269 ${weekDaysLeft} \u5929`);
         setText(container, ".day-hours-label", `\u4eca\u65e5\u8fd8\u5269 ${hoursLeft} \u5c0f\u65f6`);
-        setText(container, ".nearest-holiday-full", `\u8ddd\u79bb${nearestHoliday.name}`);
-        setText(container, ".nearest-holiday-days", nearestHoliday.days);
-        setText(container, ".nearest-holiday-date", nearestHoliday.date);
+
+        const milestone = container.querySelector(".milestone");
+        if (milestone) milestone.classList.toggle("milestone--today", isMilestoneToday);
+        setText(container, ".milestone-label", isMilestoneToday ? "今天是" : `距离下一站 · ${nextMilestone.kind}`);
+        setText(container, ".milestone-name", isMilestoneToday ? `${nextMilestone.name}快乐~` : nextMilestone.name);
+        setText(container, ".milestone-days", isMilestoneToday ? "" : String(milestoneDays));
+        const milestoneDateEl = container.querySelector(".milestone-date");
+        if (milestoneDateEl) {
+          milestoneDateEl.setAttribute("datetime", milestoneDate);
+          milestoneDateEl.textContent = milestoneDate;
+        }
       });
     };
 
-    let hourlyInterval = null;
-    let dailyInterval = null;
+    let hourlyInterval: ReturnType<typeof setInterval> | null = null;
+    let dailyInterval: ReturnType<typeof setInterval> | null = null;
 
     const clearIntervals = () => {
       if (hourlyInterval) {
@@ -198,12 +324,12 @@ const { class: className, style } = Astro.props;
       setTimeout(() => {
         updateSchedule();
         hourlyInterval = setInterval(updateSchedule, 3600000);
-      }, nextHour - now);
+      }, nextHour.getTime() - now.getTime());
 
       setTimeout(() => {
         updateSchedule();
         dailyInterval = setInterval(updateSchedule, 86400000);
-      }, nextDay - now);
+      }, nextDay.getTime() - now.getTime());
     };
 
     if (document.readyState === "loading") {
@@ -254,5 +380,72 @@ const { class: className, style } = Astro.props;
   .dark .schedule-progress-bar,
   .dark .schedule-progress-bar::-webkit-progress-bar {
     background-color: #374151;
+  }
+
+  /* 下一站节日板块 */
+  .milestone {
+    display: grid;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--line-divider);
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+
+  .milestone-label {
+    color: var(--content-meta);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+  }
+
+  .milestone-name {
+    grid-column: 1;
+    margin-top: 0.1rem;
+    font-size: 0.95rem;
+  }
+
+  .milestone-count {
+    display: flex;
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-items: baseline;
+    gap: 0.18rem;
+    color: var(--primary);
+  }
+
+  .milestone-days {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .milestone-count small {
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .milestone-date {
+    grid-column: 1;
+    margin-top: 0.18rem;
+    color: var(--content-meta);
+    font-size: 0.68rem;
+  }
+
+  /* 当天即节日：隐藏倒计时数字，节日名高亮 */
+  .milestone--today {
+    grid-template-columns: 1fr;
+  }
+
+  .milestone--today .milestone-name {
+    color: var(--primary);
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+
+  .milestone--today .milestone-count {
+    display: none;
   }
 </style>
