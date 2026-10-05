@@ -286,6 +286,8 @@ export const siteConfig: SiteConfig = {
 		outdatedThreshold: 30,
 		// 是否显示文章页的分享按钮
 		share: true,
+		// 是否显示文章页的分享海报生成按钮（开启后文章底部会出现"生成分享海报"功能）
+		sharePoster: false,
 		// 是否显示上一篇/下一篇文章导航
 		postNavigation: true,
 		// 是否显示相关文章推荐

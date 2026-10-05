@@ -193,6 +193,8 @@ export type SiteConfig = {
 		outdatedThreshold?: number;
 		// 是否显示文章页的分享按钮
 		share: boolean;
+		// 是否显示文章页的分享海报生成按钮
+		sharePoster: boolean;
 		// 是否显示上一篇/下一篇文章导航
 		postNavigation: boolean;
 		// 是否显示相关文章推荐
