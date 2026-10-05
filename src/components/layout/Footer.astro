@@ -264,6 +264,10 @@ const techStack = [
 	// Umami 访问统计：今日(访客/访问) + 建站至今(访客/访问)
 	// 配置 analyticsConfig.umamiAnalytics.websiteId 后自动生效，未配置时显示 "--"
 	(() => {
+		// 友链页挂载了 Umami 指标组件（window.__rainztUmamiMetrics，见 MicrosoftClarity.astro）时，
+		// 页脚统计由该组件统一渲染，这里跳过以避免同页双重请求与写入
+		if ((window as unknown as { __rainztUmamiMetrics?: unknown }).__rainztUmamiMetrics) return;
+
 		const umami = analyticsConfig?.umamiAnalytics;
 		const websiteId = umami?.websiteId ?? "";
 		const shareId = umami?.shareId ?? "";
