@@ -7,6 +7,11 @@ export type FriendLink = {
 	tags?: string[]; // 标签数组
 	weight: number; // 权重，数字越大排序越靠前
 	enabled: boolean; // 是否启用
+	// 以下为 Aemeath的friends 页面移植新增的可选字段
+	recommended?: boolean; // 是否使用推荐友链样式
+	recommendedTier?: "full" | "degraded"; // 推荐友链层级，降级推荐仅保留静态卡片装饰
+	temporarilyUnavailable?: boolean; // 手动显示暂时失联状态
+	screenshot?: string; // 站点截图预览图（悬停展示）
 };
 
 export type FriendsPageConfig = {

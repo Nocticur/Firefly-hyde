@@ -3,6 +3,9 @@ name: Build and Check
 on:
   push:
     branches: [ master ] # Adjust branches as needed
+    paths-ignore:
+      # 友链延迟快照的定时提交无需触发完整构建检查（EdgeOne 侧会正常部署）
+      - 'src/data/friends-latency-snapshot.json'
   pull_request:
     branches: [ master ] # Adjust branches as needed
 

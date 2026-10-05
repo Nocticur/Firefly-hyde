@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config";
 import type { AnalyticsConfig } from "@/types/config";
 
 declare global {
@@ -52,10 +53,20 @@ function loadUmami(analytics: AnalyticsConfig) {
   const umami = analytics.umamiAnalytics;
   if (!umami?.websiteId || !umami.scriptUrl) return;
 
+  // 仅上报生产域名（data-domains 白名单），本地开发（localhost）的
+  // 页面浏览 / 友链点击 / Web Vitals 事件不再发送到 Umami，避免污染线上统计
+  let productionHost: string | undefined;
+  try {
+    productionHost = new URL(siteConfig.site_url).hostname;
+  } catch {
+    productionHost = undefined;
+  }
+
   appendScript({
     defer: "",
     src: umami.scriptUrl,
     "data-website-id": umami.websiteId,
+    "data-domains": productionHost,
     "data-performance": umami.collectWebVitals ? "true" : undefined,
   });
 

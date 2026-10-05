@@ -71,9 +71,12 @@ if (processedImage) {
 	);
 	if (isLocal) {
 		const basePath = getFileDirFromPath(entry.filePath || "");
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
+		const files = import.meta.glob<ImageMetadata>(
+			"../../**/*.{png,jpg,jpeg,webp,avif,gif,svg}",
+			{
+				import: "default",
+			},
+		);
 		let normalizedPath = path
 			.normalize(path.join("../../", basePath, processedImage))
 			.replace(/\\/g, "/");
@@ -95,9 +98,12 @@ if (posterAvatarUrl) {
 		posterAvatarUrl.startsWith("data:")
 	);
 	if (isLocalAvatar) {
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
+		const files = import.meta.glob<ImageMetadata>(
+			"../../**/*.{png,jpg,jpeg,webp,avif,gif,svg}",
+			{
+				import: "default",
+			},
+		);
 		const normalizedPath = path
 			.normalize(path.join("../../", posterAvatarUrl))
 			.replace(/\\/g, "/");
@@ -133,7 +139,6 @@ const relatedPosts = await getRelatedPosts(entry, 5);
 ---
 
 <MainGridLayout
-  banner={processedImage}
   title={entry.data.title}
   description={entry.data.description}
   lang={entry.data.lang}
