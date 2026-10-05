@@ -35,8 +35,6 @@ const pages = resolvePageToggles({
 	mal: true,
 	// 设备页面开关
 	devices: true,
-	// 日记页面开关
-	diary: true,
 	// 时间线页面开关
 	timeline: true,
 	// 技能页面开关
@@ -182,13 +180,6 @@ export const siteConfig: SiteConfig = {
 			label: "中国尊",
 		},
 	},
-	// 日记页面配置
-	diary: {
-		// 默认头像
-		defaultAvatar:
-			"https://i.postimg.cc/7YLVJqnp/wei-xin-tu-pian-2026-05-07-020150-883.jpg",
-	},
-
 	// 说说页面封面配置（微信朋友圈风格）
 	momentsCover: {
 		enable: true,

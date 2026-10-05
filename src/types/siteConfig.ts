@@ -95,7 +95,6 @@ export type SiteConfig = {
 		vndb: boolean; // VNDB 页面开关
 		gallery: boolean; // 相册页面开关
 		devices: boolean;
-		diary: boolean;
 		projects: boolean;
 		timeline: boolean;
 		skills: boolean;
@@ -122,11 +121,6 @@ export type SiteConfig = {
 		};
 	};
 
-	// 日记页面配置
-	diary: {
-		// 默认头像
-		defaultAvatar: string;
-	};
 	// 说说页面封面配置（微信朋友圈风格）
 	momentsCover?: {
 		enable: boolean;

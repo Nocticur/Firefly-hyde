@@ -516,17 +516,6 @@ export const zh_TW: Translation = {
 	[Key.searchAlbums]: "搜尋相簿...",
 	[Key.albumsFilterAll]: "全部",
 
-	// 日記頁面
-	[Key.diary]: "日記",
-	[Key.diarySubtitle]: "隨時隨地，分享生活",
-	[Key.diaryNoResults]: "沒有匹配的日記",
-	[Key.diaryCount]: "條日記",
-
-	[Key.diaryTips]: "只展示最近30條日記",
-	[Key.diaryMinutesAgo]: "分鐘前",
-	[Key.diaryHoursAgo]: "小時前",
-	[Key.diaryDaysAgo]: "天前",
-
 	// 設備頁面
 	[Key.devices]: "我的設備",
 	[Key.devicesSubtitle]: "這裡展示了我日常使用的各類設備",

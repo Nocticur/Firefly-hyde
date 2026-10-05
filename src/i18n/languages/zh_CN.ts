@@ -513,17 +513,6 @@ export const zh_CN: Translation = {
 	[Key.searchAlbums]: "搜索相册...",
 	[Key.albumsFilterAll]: "全部",
 
-	// 日记页面
-	[Key.diary]: "日记",
-	[Key.diarySubtitle]: "随时随地，分享生活",
-	[Key.diaryNoResults]: "没有匹配的日记",
-	[Key.diaryCount]: "条日记",
-
-	[Key.diaryTips]: "只展示最近30条日记",
-	[Key.diaryMinutesAgo]: "分钟前",
-	[Key.diaryHoursAgo]: "小时前",
-	[Key.diaryDaysAgo]: "天前",
-
 	// 设备页面
 	[Key.devices]: "我的设备",
 	[Key.devicesSubtitle]: "这里展示了我日常使用的各类设备",

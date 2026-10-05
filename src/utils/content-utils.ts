@@ -3,7 +3,6 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl, getPostUrlBySlug } from "@utils/url-utils";
 import { siteConfig } from "@/config/siteConfig";
-import { getDiaryList } from "@/data/diary";
 import type { UserSubjectCollection } from "@/types/bangumi";
 
 async function getRawSortedPosts() {
@@ -296,8 +295,6 @@ export async function getArchiveList(): Promise<ArchiveItem[]> {
 	const posts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
-	const diaryList = getDiaryList();
-
 	const postItems: ArchiveItem[] = posts.map((post) => ({
 		id: post.id,
 		type: "post",
@@ -309,26 +306,6 @@ export async function getArchiveList(): Promise<ArchiveItem[]> {
 			category: post.data.category || null,
 		},
 	}));
-
-	// 将日记数据转换为归档项
-	const momentItems: ArchiveItem[] = diaryList.map((diary) => {
-		let title = diary.content || "";
-		title = title.replace(/[#*`]/g, "").trim();
-		if (title.length > 50) title = `${title.substring(0, 50)}...`;
-		if (!title) title = i18n(I18nKey.moments) || "日常动态";
-
-		return {
-			id: String(diary.id),
-			type: "moment",
-			link: "/diary/",
-			data: {
-				title: title,
-				published: new Date(diary.date),
-				tags: diary.tags || [],
-				category: null,
-			},
-		};
-	});
 
 	// 从 moments collection 读取数据
 	const momentsCollection = await getCollection("moments");
@@ -401,7 +378,6 @@ export async function getArchiveList(): Promise<ArchiveItem[]> {
 
 	return [
 		...postItems,
-		...momentItems,
 		...momentsFromCollection,
 		...externalMomentsItems,
 		...bangumiItems,

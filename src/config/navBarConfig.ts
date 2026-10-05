@@ -61,9 +61,6 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			// 动态
 			LinkPresets.Dynamic,
-
-			// 日记
-			LinkPresets.Diary,
 		],
 	});
 
@@ -295,11 +292,6 @@ export const LinkPresets: Record<string, NavBarLink> = {
 		name: "设备",
 		url: "/devices/",
 		icon: "material-symbols:devices",
-	},
-	Diary: {
-		name: "日记",
-		url: "/diary/",
-		icon: "material-symbols:book",
 	},
 	Projects: {
 		name: "项目",

@@ -512,16 +512,6 @@ enum I18nKey {
 	albumsPhotosCount = "albumsPhotosCount",
 	albumsNoResults = "albumsNoResults",
 
-	// 日记页面
-	diary = "diary",
-	diarySubtitle = "diarySubtitle",
-	diaryCount = "diaryCount",
-	diaryMinutesAgo = "diaryMinutesAgo",
-	diaryHoursAgo = "diaryHoursAgo",
-	diaryDaysAgo = "diaryDaysAgo",
-	diaryNoResults = "diaryNoResults",
-	diaryTips = "diaryTips",
-
 	// 设备页面
 	devices = "devices",
 	devicesSubtitle = "devicesSubtitle",

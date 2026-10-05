@@ -522,17 +522,6 @@ export const ja: Translation = {
 	[Key.searchAlbums]: "アルバムを検索...",
 	[Key.albumsFilterAll]: "すべて",
 
-	// 日記ページ
-	[Key.diary]: "日記",
-	[Key.diarySubtitle]: "いつでも、どこでも生活を共有",
-	[Key.diaryNoResults]: "一致するモーメントはありません",
-	[Key.diaryCount]: "件の日記のエントリー",
-
-	[Key.diaryTips]: "最新の30件の日記のエントリーのみを表示",
-	[Key.diaryMinutesAgo]: "分前",
-	[Key.diaryHoursAgo]: "時間前",
-	[Key.diaryDaysAgo]: "日前",
-
 	// デバイスページ
 	[Key.devices]: "デバイス",
 	[Key.devicesSubtitle]: "日常的に使用しているデバイスを紹介",

@@ -525,16 +525,6 @@ export const ko: Translation = {
 	[Key.albumsPhotosCount]: "장",
 	[Key.albumsNoResults]: "일치하는 앨범이 없습니다",
 
-	// Diary Page
-	[Key.diary]: "일기",
-	[Key.diarySubtitle]: "언제 어디서나 일상 공유",
-	[Key.diaryCount]: "개",
-	[Key.diaryMinutesAgo]: "분 전",
-	[Key.diaryHoursAgo]: "시간 전",
-	[Key.diaryDaysAgo]: "일 전",
-	[Key.diaryNoResults]: "일치하는 모먼트가 없습니다",
-	[Key.diaryTips]: "최신 일기 30개만 표시됩니다",
-
 	// Devices Page
 	[Key.devices]: "내 기기",
 	[Key.devicesSubtitle]: "일상에서 사용하는 기기들",

@@ -526,17 +526,6 @@ export const ru: Translation = {
 	[Key.searchAlbums]: "Поиск альбомов...",
 	[Key.albumsFilterAll]: "Все",
 
-	// Страница дневника
-	[Key.diary]: "Дневник",
-	[Key.diarySubtitle]: "Поделитесь жизнью, где бы вы ни были",
-	[Key.diaryNoResults]: "Нет подходящих записей",
-	[Key.diaryCount]: "записей",
-
-	[Key.diaryTips]: "Показывается только последние 30 записей",
-	[Key.diaryMinutesAgo]: "минут назад",
-	[Key.diaryHoursAgo]: "часов назад",
-	[Key.diaryDaysAgo]: "дней назад",
-
 	// Страница устройств
 	[Key.devices]: "Устройства",
 	[Key.devicesSubtitle]:
