@@ -416,11 +416,77 @@ const {
 		function renderFriendClickBadges() {
 			document.querySelectorAll("[data-friend-clicks-for]").forEach((element) => {
 				const site = normalizeSiteUrl(element.getAttribute("data-friend-clicks-for"));
-				const count = friendClickCountsBySite.get(site) || 0;
+				const count = (friendClickCountsBySite.get(site) || 0) + (friendClickPreviewCounts.get(site) || 0);
 				const valueElement = element.querySelector("[data-friend-clicks-value]");
-				if (valueElement) valueElement.textContent = formatNumber(count);
-				element.setAttribute("aria-label", `从本站点击 ${formatNumber(count)} 次`);
+				if (valueElement && count > 0) valueElement.textContent = formatNumber(count);
+				if (count > 0) element.setAttribute("aria-label", `从本站点击 ${formatNumber(count)} 次`);
 			});
+		}
+
+		// 点击乐观计数：点击友链卡片的瞬间徽章立即 +1（sessionStorage 记录，仅当前浏览器
+		// 会话有效），真实上报仍由 Umami tracker 完成。4 秒后强制重拉服务端聚合值（已包含
+		// 刚上报的点击事件）并替换乐观值，避免出现"点击后数字不动"的观感。
+		const friendClickPreviewKey = "rainzt:umami:friend-click-preview";
+		const friendClickPreviewCounts = new Map();
+		const pendingPreviewSyncs = new Map();
+
+		function loadFriendClickPreview() {
+			try {
+				const parsed = JSON.parse(sessionStorage.getItem(friendClickPreviewKey) || "null");
+				if (parsed && typeof parsed === "object") {
+					Object.entries(parsed).forEach(([site, count]) => {
+						const value = Math.floor(Number(count));
+						const key = normalizeSiteUrl(site);
+						if (key && Number.isFinite(value) && value > 0) friendClickPreviewCounts.set(key, value);
+					});
+				}
+			} catch {
+				// sessionStorage 不可用时跳过，仅影响点击瞬间的乐观显示
+			}
+		}
+
+		function saveFriendClickPreview() {
+			try {
+				sessionStorage.setItem(
+					friendClickPreviewKey,
+					JSON.stringify(Object.fromEntries(friendClickPreviewCounts)),
+				);
+			} catch {
+				// 忽略写入失败
+			}
+		}
+
+		function scheduleFriendClickSync(site) {
+			if (pendingPreviewSyncs.has(site)) return;
+			const timer = window.setTimeout(() => {
+				pendingPreviewSyncs.delete(site);
+				Promise.resolve(refresh(true)).then(() => {
+					if (friendClickCountsBySite.size > 0) {
+						friendClickPreviewCounts.delete(site);
+						saveFriendClickPreview();
+						renderFriendClickBadges();
+					}
+				});
+			}, 4000);
+			pendingPreviewSyncs.set(site, timer);
+		}
+
+		function handleFriendClickPreview(event) {
+			const target = event.target;
+			const link = target instanceof Element ? target.closest('[data-umami-event="friend-link-click"]') : null;
+			if (!link) return;
+			const site = normalizeSiteUrl(link.getAttribute("data-umami-event-site"));
+			if (!site) return;
+			friendClickPreviewCounts.set(site, (friendClickPreviewCounts.get(site) || 0) + 1);
+			saveFriendClickPreview();
+			renderFriendClickBadges();
+			scheduleFriendClickSync(site);
+		}
+
+		loadFriendClickPreview();
+		if (!window.__rainztFriendClickPreviewBound) {
+			window.__rainztFriendClickPreviewBound = true;
+			document.addEventListener("click", handleFriendClickPreview, true);
 		}
 
 		const replaySummaryAnimations = () => {
@@ -448,9 +514,6 @@ const {
 				element.textContent = "加载中";
 			});
 			document.querySelectorAll('[data-umami-stat="todayVisitors"], [data-umami-stat="todayPageviews"]').forEach((element) => {
-				element.textContent = "加载中";
-			});
-			document.querySelectorAll("[data-friend-clicks-value]").forEach((element) => {
 				element.textContent = "加载中";
 			});
 		}
@@ -487,11 +550,6 @@ const {
 				if (metrics) renderPageViews(metrics);
 				if (needsStats) renderSiteStats(stats, todayStats);
 				if (friendClickCounts) renderFriendClickCounts(friendClickCounts);
-				if (!friendClickCounts && needsFriendClickCounts) {
-					document.querySelectorAll("[data-friend-clicks-value]").forEach((element) => {
-						element.textContent = "加载中";
-					});
-				}
 				if (!metrics && needsViews) {
 					document.querySelectorAll("[data-umami-pageviews]").forEach((element) => {
 						element.textContent = "加载中";
