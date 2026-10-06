@@ -424,8 +424,10 @@ const {
 		}
 
 		// 点击乐观计数：点击友链卡片的瞬间徽章立即 +1（sessionStorage 记录，仅当前浏览器
-		// 会话有效），真实上报仍由 Umami tracker 完成。4 秒后强制重拉服务端聚合值（已包含
-		// 刚上报的点击事件）并替换乐观值，避免出现"点击后数字不动"的观感。
+		// 会话有效），真实上报仍由 Umami tracker 完成。生产环境点击会真实上报，4 秒后强制
+		// 重拉服务端聚合值（已包含刚上报的点击事件）并替换乐观值，避免出现"点击后数字不动"
+		// 的观感；本地开发的上报被 data-domains 拦截，服务端不会计入本地点击，因此乐观值
+		// 保留整个会话，不做同步回退。
 		const friendClickPreviewKey = "rainzt:umami:friend-click-preview";
 		const friendClickPreviewCounts = new Map();
 		const pendingPreviewSyncs = new Map();
@@ -480,7 +482,7 @@ const {
 			friendClickPreviewCounts.set(site, (friendClickPreviewCounts.get(site) || 0) + 1);
 			saveFriendClickPreview();
 			renderFriendClickBadges();
-			scheduleFriendClickSync(site);
+			if (!isLocalAnalytics) scheduleFriendClickSync(site);
 		}
 
 		loadFriendClickPreview();
