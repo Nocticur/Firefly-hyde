@@ -107,7 +107,7 @@ const fetchUmamiEventValues = async (
 	const url = new URL(`${apiBase}/api/websites/${websiteId}/event-data/values`);
 	url.searchParams.set("startAt", "0");
 	url.searchParams.set("endAt", String(Date.now()));
-	url.searchParams.set("event", eventName);
+	url.searchParams.set("eventName", eventName);
 	url.searchParams.set("propertyName", propertyName);
 	url.searchParams.set("limit", "1000");
 	const res = await fetch(url, {
