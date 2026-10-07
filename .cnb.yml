@@ -61,7 +61,10 @@ main:
           script: |
             pnpm install --registry https://registry.npmjs.org
             cd admin && pnpm install --registry https://registry.npmjs.org && cd ..
-        - name: 📦️ 编译项目
+        - name: � 探测友链延迟与点击
+          script: |
+            pnpm probe-friends || echo "友链探测失败，使用仓库内快照继续构建"
+        - name: �📦️ 编译项目
           # if: |
           #   [ "$CNB_COMMIT_MESSAGE_TITLE" = "BUILD" ]
           script: |

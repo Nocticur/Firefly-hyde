@@ -78,6 +78,7 @@ type FriendLatencySnapshot = {
 			state: FriendLatencyState;
 			milliseconds?: number;
 			checkedAt: string;
+			clicks?: number;
 		}
 	>;
 };
@@ -336,6 +337,7 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
                 href={item.siteurl}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-umami-event={isOwnSite ? undefined : "friend-link-click"}
                 aria-label={
                   isTemporarilyUnavailable
                     ? `${item.title}，短暂失联`
@@ -440,10 +442,10 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
                   class="friend-click-count"
                   data-friend-clicks-for={item.siteurl}
                   title="从本站点击次数"
-                  aria-label={`${item.title}，从本站点击次数`}
+                  aria-label={`${item.title}，从本站点击 ${scheduledLatency?.clicks != null ? scheduledLatency.clicks.toLocaleString('zh-CN') : 0} 次`}
                 >
                   <Icon is:inline name="material-symbols:ads-click-rounded" aria-hidden="true" />
-                  <span data-friend-clicks-value aria-live="polite">…</span>
+                  <span data-friend-clicks-value aria-live="polite">{scheduledLatency?.clicks != null ? scheduledLatency.clicks.toLocaleString('zh-CN') : '…'}</span>
                   <span class="friend-click-count-unit" aria-hidden="true">次</span>
                 </span>
               )}
@@ -1706,7 +1708,7 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
           }).join('') +
         '</div>';
       }
-      return '<a href="' + item.siteUrl + '" target="_blank" rel="noopener noreferrer" data-tags="' + (item.tags ? item.tags.join(',') : '') + '" class="friend-card friend-list-card group flex items-center gap-3 p-2.5 rounded-xl border border-(--line-divider) hover:border-(--primary) hover:bg-(--card-bg) transition-all duration-300 hover:shadow-lg relative overflow-hidden animate-fade-in-up">' +
+      return '<a href="' + item.siteUrl + '" target="_blank" rel="noopener noreferrer" data-umami-event="friend-link-click" data-tags="' + (item.tags ? item.tags.join(',') : '') + '" class="friend-card friend-list-card group flex items-center gap-3 p-2.5 rounded-xl border border-(--line-divider) hover:border-(--primary) hover:bg-(--card-bg) transition-all duration-300 hover:shadow-lg relative overflow-hidden animate-fade-in-up">' +
         '<div class="absolute inset-0 bg-(--primary) opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>' +
         '<div class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-black/5 dark:border-white/5 group-hover:scale-105 transition-transform duration-300">' +
           '<img src="' + item.imgUrl + '" alt="' + item.title + '" class="w-full h-full object-cover" loading="lazy" />' +
