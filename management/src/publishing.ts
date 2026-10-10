@@ -1,6 +1,6 @@
 import type { Hono } from "hono";
 import { z } from "zod";
-import { publicationFiles, publishArticleRaw } from "./content.ts";
+import { normalizeSlug, publicationFiles, publishArticleRaw } from "./content.ts";
 import { ApiError } from "./errors.ts";
 import { assertPublishingConfiguration, dispatchPublicationTask, githubClient, verifyProduction } from "./integrations.ts";
 import { publishMedia } from "./media.ts";
@@ -119,6 +119,8 @@ export async function freezePublication(services: Services, input: PublicationIn
 			version = current.publishedVersion;
 			expectedFiles[article.path] = current.publishedHash ?? null;
 		} else continue;
+		normalizeSlug(article.slug);
+		for (const old of article.redirects) normalizeSlug(old);
 		snapshot.push({ ...article, version, sha256: await sha256(article.raw) });
 	}
 	if (new Set(snapshot.map(article => article.slug)).size !== snapshot.length || new Set(snapshot.map(article => article.path)).size !== snapshot.length) throw new ApiError(409, "PUBLICATION_COLLISION", "Frozen public paths or slugs overlap");

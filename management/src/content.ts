@@ -1,5 +1,6 @@
 import { parseDocument, isScalar } from "yaml";
 import { z } from "zod";
+import { normalizeArticleSlug } from "../../shared/article-slug.ts";
 import type { Hono } from "hono";
 import { ApiError } from "./errors.ts";
 import { sha256 } from "./security.ts";
@@ -7,9 +8,8 @@ import type { Change } from "./store.ts";
 import type { AppEnv, Article, History, Publication, Services, Stored } from "./types.ts";
 
 export function normalizeSlug(value:string){
-  const slug=value.replace(/^\/+|\/+$/g,"").normalize("NFC");
-  if(!slug || slug.length>200 || /[\\?#\u0000-\u001f]/u.test(slug) || slug.split("/").some(x=>x===".."||x==="."||!x))throw new ApiError(400,"INVALID_SLUG","A fixed slug without traversal, query, or fragment is required");
-  return slug;
+  try{return normalizeArticleSlug(value);}
+  catch{throw new ApiError(400,"INVALID_SLUG","Use a literal fixed slug without URL encoding, traversal, query, fragment or control characters");}
 }
 export function articlePath(value:string){
   if(!value.startsWith("src/content/posts/") || !/\.(md|mdx)$/.test(value) || /[\\\u0000-\u001f]/u.test(value) || value.split("/").some(x=>x===".."||x==="."||!x))throw new ApiError(400,"INVALID_PATH","Use a Markdown or MDX path inside src/content/posts");
@@ -27,6 +27,7 @@ export function articleTitle(raw:string){const {document}=frontmatter(raw);const
 // Only the scalar ranges of owned fields are edited. Unknown YAML, comments, body,
 // MDX and HTML remain byte-for-byte intact, including original newline style.
 export function publishArticleRaw(article:Pick<Article,"raw"|"slug">){
+  normalizeSlug(article.slug);
   const {document,start,end,newline}=frontmatter(article.raw);
   const edits:Array<{start:number;end:number;text:string}>=[];
   const patch=(key:string,value:string|boolean)=>{
@@ -107,13 +108,15 @@ export function registerArticles(app:Hono<AppEnv>){
     const current=await services.store.get<Article>("article",c.req.param("id")),snapshot=await services.store.get<History>("history",`${c.req.param("id")}:${input.version}`);
     if(!current||!snapshot)throw new ApiError(404,"HISTORY_NOT_FOUND","Article version not found");
     if(current.version!==input.expectedVersion)throw new ApiError(409,"VERSION_CONFLICT","The current draft was saved after this page loaded",{current:flattenArticle(current)});
-    const next:Article={...current.value,raw:snapshot.value.raw,path:snapshot.value.path,slug:snapshot.value.slug,title:snapshot.value.title,draft:snapshot.value.draft,updatedAt:new Date(services.now()).toISOString(),redirects:[...new Set([...current.value.redirects,...(snapshot.value.slug!==current.value.slug&&current.value.publishedVersion?[current.value.publishedSlug ?? current.value.slug]:[])])]};
+    const next:Article={...current.value,raw:snapshot.value.raw,path:articlePath(snapshot.value.path),slug:normalizeSlug(snapshot.value.slug),title:snapshot.value.title,draft:snapshot.value.draft,updatedAt:new Date(services.now()).toISOString(),redirects:[...new Set([...current.value.redirects,...(snapshot.value.slug!==current.value.slug&&current.value.publishedVersion?[current.value.publishedSlug ?? current.value.slug]:[])])]};
     const changes=await indexes(services,next,current);
     await services.store.atomic([{kind:"article",id:next.id,value:next,expectedVersion:current.version},{kind:"history",id:`${next.id}:${current.version+1}`,value:history(next,current.version+1,"restore"),expectedVersion:null},...changes]);
     return c.json({...next,version:current.version+1});
   });
 }
 export function publicationFiles(publication:Publication):Array<{path:string;content:string|null}>{
+  for(const article of publication.snapshot){articlePath(article.path);normalizeSlug(article.slug);for(const old of article.redirects)normalizeSlug(old);}
+  for(const identity of publication.registry??[]){articlePath(identity.path);normalizeSlug(identity.slug);}
   const json=(value:unknown)=>JSON.stringify(value,null,2)+"\n";
   const files:Array<{path:string;content:string|null}>=publication.snapshot.map(article=>({path:article.path,content:article.raw}));
   const map=new Map((publication.registry??[]).map(x=>[x.id,x]));for(const {id,path,slug} of publication.snapshot){const old=map.get(id);if(old && old.path!==path)files.push({path:old.path,content:null});map.set(id,{id,path,slug});}

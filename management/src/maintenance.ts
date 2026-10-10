@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { z } from "zod";
+import { checkUpdates } from "./updates.ts";
 import { ApiError,required } from "./errors.ts";
 import { importBaseline } from "./content.ts";
 import { sha256 } from "./security.ts";
@@ -118,12 +119,7 @@ async function performTask(services:Services,task:Task):Promise<unknown>{
     case "backup":return createBackup(services,task.id);
     case "restore":return restoreBackup(services,String(task.payload.backupId??""),String(task.payload.confirm??""),{task});
     case "verify-backup":return verifyBackup(services,String(task.payload.backupId??""));
-    case "check-updates":{
-      const repo=required(services.env.GITHUB_REPOSITORY,"GITHUB_REPOSITORY");
-      const response=await services.fetcher(`https://api.github.com/repos/${repo}/releases/latest`,{headers:{Accept:"application/vnd.github+json","User-Agent":"Nocticur-Management"},signal:AbortSignal.timeout(15000)});
-      if(response.status===404)return {latestRelease:null,message:"Repository has no tagged release"};if(!response.ok)throw new ApiError(502,"UPDATE_CHECK_FAILED","GitHub release lookup failed");
-      const release=await response.json() as {tag_name:string;html_url:string};return {latestRelease:release.tag_name,url:release.html_url,automaticUpgrade:false};
-    }
+    case "check-updates":return checkUpdates(services);
     case "clear-cache":{
       // APIs, private previews and release manifests are always no-store. Only
       // platform public asset caches may be purged through their official API.
@@ -171,8 +167,9 @@ export async function runMaintenance(services:Services,options:{backup?:boolean}
       if(latest){
         await services.store.assertLease(`maintenance-${row.id}`,owner,lease.value.fence);
         const publicationState=row.value.type==="rebuild-index"?(result as {status:string}).status:undefined;
-        const status:Task["status"]=publicationState && !["succeeded","failed","conflict"].includes(publicationState)?"pending":publicationState && publicationState!=="succeeded"?"failed":"succeeded";
-        await services.store.update("task",row.id,latest.version,{...latest.value,status,payload:{...latest.value.payload,result},...(status==="pending"?{nextRunAt:services.now()+60_000}:{}),updatedAt:new Date(services.now()).toISOString()});
+        const incompleteUpdate=row.value.type==="check-updates" && !(result as {complete:boolean}).complete;
+        const status:Task["status"]=incompleteUpdate?"failed":publicationState && !["succeeded","failed","conflict"].includes(publicationState)?"pending":publicationState && publicationState!=="succeeded"?"failed":"succeeded";
+        await services.store.update("task",row.id,latest.version,{...latest.value,status,payload:{...latest.value.payload,result},...(incompleteUpdate?{error:"Some upstream versions could not be verified; review the recorded results and retry"}:{}),...(status==="pending"?{nextRunAt:services.now()+60_000}:{}),updatedAt:new Date(services.now()).toISOString()});
       }
     }catch(error){const latest=await services.store.get<Task>("task",row.id);if(latest)await services.store.update("task",row.id,latest.version,{...latest.value,status:"failed",error:error instanceof ApiError?error.message:"Maintenance operation failed",updatedAt:new Date(services.now()).toISOString()});}
     finally{await services.store.releaseLease(`maintenance-${row.id}`,owner,lease.value.fence);}

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const first = {
@@ -131,4 +131,29 @@ test("changed slugs and invalid captured commits prevent a false publication man
 		);
 		assert.throws(() => build(directory), /captured Git SHA/);
 	});
+});
+
+test("encoded path traversal and control characters cannot enter a public manifest", async () => {
+	for (const slug of [
+		"%2e%2e/admin",
+		"%2E%2E/api",
+		"valid%2falias",
+		"part/%252e%252e/admin",
+		"bad\u007f",
+	]) {
+		await fixture(async (directory) => {
+			await writeFile(
+				path.join(directory, "src/constants/article-ids.json"),
+				JSON.stringify({
+					repository: "Nocticur/Test",
+					articles: [{ ...first, slug }, second],
+				}),
+			);
+			await writeFile(
+				path.join(directory, first.path),
+				publicRaw.replace("中文/Case", slug),
+			);
+			assert.throws(() => build(directory), /literal article slug/, slug);
+		});
+	}
 });

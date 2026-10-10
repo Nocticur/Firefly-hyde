@@ -8,8 +8,6 @@
   "src:assets/images/MobileWallpaper/m1.avif": "cbcce1cbc0d69295bf",
   "src:assets/images/logo/firefly-light.png": "000000000000000000",
   "src:assets/images/logo/firefly-dark.png": "ffffffffffffffffff",
-  "public:assets/images/sponsor/wechat.png": "d5d5d5dad9d7dbd8cf",
-  "public:assets/images/sponsor/alipay.png": "8ebbde91bedf93c0e0",
   "public:assets/images/ad/ad1.webp": "a1b8b68a8e918c8f93",
   "src:content/projects/images/firefly.avif": "b5b0b3bcb6bbe0e0df",
   "public:assets/avatar.avif": "d9c7bab4a09b9c98a3",
@@ -34,5 +32,7 @@
   "src:assets/images/DesktopWallpaper/拾光_Windows聚焦_b1d8c2ec7ddde10a.webp": "7789997297af2e4b6b",
   "src:assets/images/DesktopWallpaper/拾光_Windows聚焦_044bdf8a23f7808d.webp": "7e9e9f88acc61c6049",
   "src:assets/images/DesktopWallpaper/xueshan.webp": "70a2ca70aadb9e7d3b",
-  "src:assets/images/footer-animals.webp": "574b4d5c545ca0858d"
+  "src:assets/images/footer-animals.webp": "574b4d5c545ca0858d",
+  "src:assets/images/logo-nocticur.png": "c8bdbeddd8d8c49cbd",
+  "public:assets/images/logo-nocticur.png": "c8bdbeddd8d8c49cbd"
 }

@@ -30,6 +30,8 @@ jobs:
           run_install: false
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Reject high and critical dependency advisories
+        run: pnpm audit --audit-level high
       - name: Check Astro
         run: pnpm check
       - name: Check TypeScript
@@ -41,3 +43,30 @@ jobs:
       - name: Build complete static site and search index
         # Workers Builds deploys this static output; the frontend uses no SSR adapter.
         run: env -u CF_WORKERS -u BUILD_ADMIN pnpm build
+
+  management:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Node.js
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        with:
+          node-version: '24.19.0'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          version: 11.22.0
+          run_install: false
+      - name: Install management dependencies
+        run: pnpm --dir management install --frozen-lockfile
+      - name: Reject high and critical management dependency advisories
+        run: pnpm --dir management audit --audit-level high
+      - name: Check management API types
+        run: pnpm --dir management typecheck
+      - name: Test management API and security boundaries
+        run: pnpm --dir management test
+      - name: Test management UI
+        run: pnpm --dir management --filter @firefly/management-ui test
+      - name: Build management UI
+        run: pnpm --dir management --filter @firefly/management-ui build

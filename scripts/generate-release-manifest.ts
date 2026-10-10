@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
+import { normalizeArticleSlug } from "../shared/article-slug";
 
 interface ArticleIdentity {
 	id: string;
@@ -43,11 +44,7 @@ async function main(): Promise<void> {
 		if (!/^[a-f0-9-]{36}$/.test(identity.id) || ids.has(identity.id))
 			throw new Error("Invalid or duplicate article ID");
 		if (
-			!identity.slug ||
-			/[?#\\\\]/.test(identity.slug) ||
-			identity.slug
-				.split("/")
-				.some((part) => !part || part === "." || part === "..") ||
+			normalizeArticleSlug(identity.slug) !== identity.slug ||
 			slugs.has(identity.slug)
 		)
 			throw new Error("Invalid or duplicate article slug");

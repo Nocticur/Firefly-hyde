@@ -29,6 +29,8 @@ Node 开发服务只在 development 使用 `.local/management.sqlite` 和私有�
 
 接口文档由 `GET /api/openapi.json` 提供。管理接口需要会话，写操作需要
 `X-CSRF-Token`；版本冲突返回 409。文章保存保留原始 YAML、注释、HTML 与 MDX。
+固定 slug 使用原始中文或英文文本，不能预先进行百分号 URL 编码；创建、保存、
+历史恢复、发布及构建共享相同校验，拒绝编码点段、分隔符及控制字符。
 新草稿和新媒体始终私有。发布冻结版本，通过 GitHub App 原子提交 `main` 后，
 核对生产 Worker 版本、目标 Git SHA 与生产域名 release manifest 才标记成功。
 结果未知的提交先核验 nonce 和已准备的 SHA，不重新创建提交。
@@ -42,6 +44,13 @@ Node 开发服务只在 development 使用 `.local/management.sqlite` 和私有�
 保留。未知邮件超过 23 小时安全窗口停止重发，须核查实际投递结果。
 
 维护任务支持备份、只读验证备份、恢复、更新检查、完整重建索引与缓存清理。
+`check-updates` 比较实际主题上游 `Seasir-Hyde/Firefly-hyde` 的 `main`、
+`package.json` 版本及新增提交，无须上游创建 Release。已集成的主题基线为
+`a42b775bbec11b0dd81cc596a1a60e0c39bc8aa4`，仅在人工审查并合入上游后更新
+`src/updates.ts` 中的基线 SHA。后台则将正在运行的服务版本与
+`GITHUB_REPOSITORY` / `GITHUB_BRANCH` 的 `management/package.json` 比较，
+后台每次发布应维护语义版本。查询只读、不自动升级、不覆盖本地修改，也不新增
+必填环境变量。失败组件明确显示未核验，保留其他组件结果，任务可重试。
 `restore` 的 payload 必须是 `{backupId, confirm: "RESTORE_PRIVATE_DATA"}`。
 恢复先核验备份 SHA256、私有媒体清单及引用字节，再创建安全备份，撤销旧会话并
 恢复稳定 ID、历史和未完成任务；恢复和发布原子争用同一持久站点锁，当前发布

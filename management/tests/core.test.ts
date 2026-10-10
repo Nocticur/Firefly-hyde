@@ -64,6 +64,32 @@ test("two database connections saving the same expected version allow exactly on
   }finally{await second.close?.();await f.close();}
 });
 
+test("encoded traversal slugs cannot create, edit or restore articles and do not alter source/history",async()=>{
+  const f=await fixture();try{
+    const invalid=["%2e%2e/admin","%2E%2E/api","part/%252e%252e/admin","valid%2falias","valid%5calias","bad%3fquery","../admin","part/./leaf","bad\u007f"];
+    for(const slug of invalid){
+      const body={raw:source,path:"src/content/posts/blocked.md",slug,draft:true};
+      const created=await f.request("/api/articles","POST",body);assert.equal(created.status,400,slug);assert.equal((await created.json()).error.code,"INVALID_SLUG");
+      const saved=await f.request("/api/articles/baseline-article","PUT",{...body,version:1});assert.equal(saved.status,400,slug);
+    }
+    const current=await f.store.get<Article>("article","baseline-article");assert.equal(current?.version,1);assert.equal(current?.value.raw,source);assert.equal((await f.store.all("article")).length,1);assert.equal((await f.store.all("history")).length,1);
+    const old=await f.store.get<any>("history","baseline-article:1");await f.store.update("history",old!.id,old!.version,{...old!.value,slug:"%2e%2e/admin"});
+    assert.equal((await f.request("/api/articles/baseline-article/restore","POST",{version:1,expectedVersion:1})).status,400);
+    assert.equal((await f.store.get<Article>("article","baseline-article"))?.version,1);
+    const safe=await f.request("/api/articles","POST",{raw:source,path:"src/content/posts/safe.md",slug:"正常中文/Case",draft:true});assert.equal(safe.status,201);assert.equal((await safe.json()).slug,"正常中文/Case");
+  }finally{await f.close();}
+});
+
+test("an incomplete update check records its partial evidence and remains retryable",async()=>{
+  const f=await fixture();try{
+    f.services.fetcher=async(input)=>{const path=new URL(String(input)).pathname;if(path.includes("Seasir-Hyde"))return new Response("private provider response",{status:429});if(path.includes("/branches/"))return Response.json({commit:{sha:"a".repeat(40)}});return Response.json({encoding:"base64",content:Buffer.from(JSON.stringify({version:"1.0.1"})).toString("base64")});};
+    const response=await f.request("/api/maintenance/tasks","POST",{type:"check-updates"}),task=await response.json();assert.equal(response.status,202);
+    await runMaintenance(f.services);
+    const row=await f.store.get<any>("task",task.id);assert.equal(row?.value.status,"failed");assert.equal(row?.value.payload.result.complete,false);assert.equal(row?.value.payload.result.components[0].status,"unavailable");assert.equal(row?.value.payload.result.components[1].status,"up-to-date");assert(!JSON.stringify(row?.value).includes("private provider response"));
+    const retried=await f.request(`/api/maintenance/tasks/${task.id}/retry`,"POST",{version:row!.version});assert.equal(retried.status,202);assert.equal((await retried.json()).status,"pending");
+  }finally{await f.close();}
+});
+
 test("the 16-article baseline uses a single atomic batch within D1 query and bind limits",async()=>{
   const dir=await mkdtemp(join(tmpdir(),"management-d1-budget-")),db=await localDatabase(join(dir,"db.sqlite"));try{
     const batches:Array<Array<{sql:string;params?:unknown[]}>>=[],store=new RecordStore({...db,batch:async statements=>{batches.push(statements);return db.batch(statements);}});await store.migrate();
