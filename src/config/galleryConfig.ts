@@ -26,8 +26,7 @@ export const galleryConfig: GalleryConfig = {
 		{
 			id: "Mount Sanqing",
 			name: "三清山",
-			description:
-				"三清山相册",
+			description: "三清山相册",
 			location: "三清山",
 			date: "2026-07-04",
 			tags: ["爬山", "三清山"],

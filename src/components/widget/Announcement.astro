@@ -66,6 +66,14 @@ const showTitle = widgetConfig?.showTitle !== false;
        并渲染到所有 .announcement-content 实例；请求结束后重置标志，下一次导航可再次刷新。 -->
   {config.enableApi && (
   <script>
+    import type { AnnouncementConfig } from "@/types/announcementConfig";
+
+    declare global {
+      interface Window {
+        __announcementFetching?: boolean;
+      }
+    }
+
     (function() {
       function loadAnnouncements() {
         if (window.__announcementFetching) return;
@@ -75,7 +83,7 @@ const showTitle = widgetConfig?.showTitle !== false;
             if (!response.ok) throw new Error('bad status');
             return response.json();
           })
-          .then(function(data) {
+          .then(function(data: { announcements?: AnnouncementConfig[] } | null) {
             const announcements = (data && data.announcements) || [];
             if (announcements.length === 0) return;
             const containers = document.querySelectorAll('.announcement-content');

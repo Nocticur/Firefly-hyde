@@ -1,5 +1,5 @@
+import managedRedirects from "./src/constants/managed-redirects.json" with { type: "json" };
 import { setMaxListeners } from "node:events";
-import cloudflare from "@astrojs/cloudflare";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -52,6 +52,7 @@ import { remarkImageGrid } from "./src/plugins/remark-image-grid.js";
 import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
 import { remarkPlantuml } from "./src/plugins/remark-plantuml.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
+import { remarkRedactLegacyCredentials } from "./src/plugins/remark-redact-legacy-credentials.mjs";
 import { remarkWikiLink } from "./src/plugins/remark-wiki-link.js";
 import { collectUsedFontCssVars } from "./src/utils/fontHelper";
 
@@ -59,16 +60,11 @@ if (process.env.NODE_ENV === "development") {
 	setMaxListeners(20);
 }
 
-const adapter = process.env.CF_WORKERS
-	? cloudflare({
-			prerenderEnvironment: "node",
-		})
-	: undefined;
-
 // https://astro.build/config
 export default defineConfig({
 	site: siteConfig.site_url,
 
+	redirects: Object.fromEntries(Object.entries(managedRedirects).map(([from, to]) => [from, { destination: to, status: 301 }])),
 	base: "/",
 	trailingSlash: "always",
 
@@ -108,7 +104,7 @@ export default defineConfig({
 			});
 	})(),
 
-	adapter,
+	output: "static",
 
 	// 图像优化配置
 	image: {
@@ -247,7 +243,10 @@ export default defineConfig({
 			filter: (page) => {
 				// 根据页面开关配置过滤sitemap
 				const url = new URL(page);
-				const pathname = url.pathname;
+				const pathname = decodeURIComponent(url.pathname);
+				if (pathname === "/blog" || pathname.startsWith("/blog/") ||
+					["/adminmn", "/admin", "/preview", "/cloud-functions", "/edge-functions"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
+					Object.hasOwn(managedRedirects, pathname)) return false;
 				if (pathname === "/dynamic/" && !siteConfig.pages.dynamic) {
 					return false;
 				}
@@ -295,6 +294,7 @@ export default defineConfig({
 	markdown: {
 		processor: unified({
 			remarkPlugins: [
+				remarkRedactLegacyCredentials,
 				...(siteConfig.post.rehypeCallouts.enablePythonMarkdownAdmonitions !==
 				false
 					? [remarkAdmonitionToBlockquoteCallout]

@@ -1,0 +1,20 @@
+// Test fixtures only. This helper refuses to write to the repository's local DB.
+import { localDatabase } from "../../src/local-database.ts";
+import { RecordStore } from "../../src/store.ts";
+import { sha256 } from "../../src/security.ts";
+import type { Article, Comment, Friend } from "../../src/types.ts";
+const path = process.env.SMOKE_DB_PATH ?? "/tmp/management-ui-smoke.sqlite";
+if (!path.startsWith("/tmp/") || !path.includes("smoke")) throw new Error("Smoke fixtures require an isolated /tmp smoke database");
+const database = await localDatabase(path); const store = new RecordStore(database);
+const article = (await store.all<Article>("article")).find(item => item.value.publishedVersion);
+if (!article) throw new Error("Import the real baseline before seeding UI fixtures");
+const now = new Date().toISOString(); const namespace = crypto.randomUUID();
+const parentId = `smoke-parent-${namespace}`; const replyId = `smoke-reply-${namespace}`; const email = `${namespace}@example.com`;
+const parent: Comment = { id: parentId, articleId: article.id, parentId: null, name: `验收访客-${namespace.slice(0, 8)}`, email, authorKey: await sha256(`local-only:email:${email}`), text: "验收父评论", deleted: false, createdAt: now, updatedAt: now };
+const reply: Comment = { ...parent, id: replyId, parentId, name: `验收回复者-${namespace.slice(0, 8)}`, text: "验收子回复" };
+await store.create("comment", parentId, parent); await store.create("comment", replyId, reply);
+const friend = (suffix: string): Friend => ({ id: `smoke-friend-${suffix}-${namespace}`, name: `验收友链${suffix}-${namespace.slice(0, 8)}`, url: `https://example.com/${suffix}/${namespace}`, avatar: "", description: "仅隔离数据库中的交互验收记录", email: `${suffix}-${namespace}@example.com`, status: "pending", reason: "", group: "友链", order: 0, live: false, notificationStatus: "waiting", createdAt: now });
+const approved = friend("批准"), rejected = friend("拒绝");
+await store.create("friend", approved.id, approved); await store.create("friend", rejected.id, rejected);
+console.log(JSON.stringify({ parentId, replyId, articleId: article.id, approveId: approved.id, approveName: approved.name, rejectId: rejected.id, rejectName: rejected.name, parentName: parent.name }));
+await database.close?.();

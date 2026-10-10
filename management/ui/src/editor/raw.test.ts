@@ -1,0 +1,17 @@
+import { describe, expect, it } from "vitest";
+import { patchMetadata, readMetadata, splitRaw, visualSafety } from "./raw";
+describe("lossless article source", () => {
+	const raw = "\uFEFF---\r\ntitle: '原题' # 标题说明\r\nunknown: { nested: [a, b], quoted: 'Keep  spacing' } # untouched\r\nnotes: |\r\n  保留多行\r\n  与缩进\r\ncategory: cloudflare\r\ntags: [部署]\r\n---\r\n正文\r\n\r\n<div>HTML 原样</div>\r\n";
+	it("splits BOM/CRLF without changing any byte", () => { const parts = splitRaw(raw); expect(parts.prefix + parts.body).toBe(raw); expect(parts.body).toContain("<div>"); });
+	it("no-op metadata edits preserve exact quoted fields and comments", () => { expect(patchMetadata(raw, { title: "原题", category: "cloudflare", tags: ["部署"] })).toBe(raw); });
+	it("updates only the selected scalar range", () => { const changed = patchMetadata(raw, { title: "新题" }); expect(changed).toBe(raw.replace("'原题'", "新题")); expect(readMetadata(changed).title).toBe("新题"); });
+	it("adds known keys without normalizing unknown YAML or body", () => { const changed = patchMetadata(raw, { pinned: true }); expect(changed).toContain("unknown: { nested: [a, b], quoted: 'Keep  spacing' } # untouched\r\nnotes: |\r\n  保留多行\r\n  与缩进"); expect(splitRaw(changed).body).toBe(splitRaw(raw).body); expect(readMetadata(changed).pinned).toBe(true); });
+	it("updates tags as a valid YAML flow sequence", () => { const changed = patchMetadata(raw, { tags: ["部署", "软件"] }); expect(readMetadata(changed).tags).toEqual(["部署", "软件"]); expect(changed).toContain("unknown: { nested: [a, b]"); });
+	it("retains comments when replacing multiline known values", () => { const original = "---\ndescription: |-\n  old\n  lines\nunknown: [1, 2] # retain\n---\nbody"; const changed = patchMetadata(original, { description: "新摘要" }); expect(readMetadata(changed).description).toBe("新摘要"); expect(changed).toContain("unknown: [1, 2] # retain"); expect(splitRaw(changed).body).toBe("body"); });
+	it("rejects malformed YAML instead of rewriting it", () => { expect(() => patchMetadata("---\ntitle: [oops\n---\nbody", { title: "x" })).toThrow(); });
+	it("edits the legacy comment switch without introducing a conflicting new field", () => { const original = "---\ntitle: Existing\ncomment: false # keep\nunknown: [1, 2]\n---\nbody"; expect(readMetadata(original).comments).toBe(false); expect(patchMetadata(original, { comments: true })).toBe(original.replace("comment: false", "comment: true")); });
+	it("preserves comments attached to an edited block scalar header", () => { const original = "---\ndescription: |- # 摘要说明\n  old text\nunknown: { untouched: true }\n---\nbody"; const changed = patchMetadata(original, { description: "new text" }); expect(changed).toContain("description: new text # 摘要说明"); expect(changed).toContain("unknown: { untouched: true }"); expect(readMetadata(changed).description).toBe("new text"); });
+	it.each(["<div>HTML</div>", "[[主题链接]]", "> [!NOTE]\n> callout", "import Demo from './Demo'", "[^note]: text", ":::tip\ncustom\n:::" ])("locks unsafe source: %s", content => { expect(visualSafety(content, "x.md").safe).toBe(false); });
+	it("always keeps MDX in source mode", () => { expect(visualSafety("# simple", "x.mdx").safe).toBe(false); });
+	it("allows basic markdown and Mermaid fenced text", () => { expect(visualSafety("# title\n\n**bold**\n\n```mermaid\ngraph TD\n A[ok]-->B[done]\n```", "x.md").safe).toBe(true); });
+});

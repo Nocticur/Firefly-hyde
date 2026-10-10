@@ -1,0 +1,188 @@
+---
+interface Props {
+	articleId: string;
+}
+const { articleId } = Astro.props;
+---
+
+<public-comments data-article-id={articleId} class="block space-y-5">
+  <div data-comment-list class="space-y-4" aria-live="polite"></div>
+  <form class="space-y-3">
+    <div class="flex flex-wrap gap-3">
+      <label class="flex-1 min-w-40 text-sm text-(--content-meta)">昵称
+        <input name="name" required maxlength="80" autocomplete="nickname" class="block w-full mt-1 rounded-lg border border-(--line-divider) bg-transparent px-3 py-2 text-(--btn-content)" />
+      </label>
+      <label class="flex-1 min-w-40 text-sm text-(--content-meta)">邮箱（不会公开）
+        <input name="email" type="email" required maxlength="254" autocomplete="email" class="block w-full mt-1 rounded-lg border border-(--line-divider) bg-transparent px-3 py-2 text-(--btn-content)" />
+      </label>
+    </div>
+    <p data-reply-status class="hidden text-sm text-(--content-meta)"></p>
+    <button data-cancel-reply type="button" class="hidden text-sm text-(--primary)">取消回复</button>
+    <label class="block text-sm text-(--content-meta)">评论
+      <textarea name="text" required maxlength="5000" rows="4" placeholder="写下你的想法…" class="block w-full mt-1 rounded-lg border border-(--line-divider) bg-transparent px-3 py-2 text-(--btn-content)"></textarea>
+    </label>
+    <div data-challenge></div>
+    <p data-comment-status class="text-sm text-(--content-meta)" role="status">正在加载评论…</p>
+    <div class="flex items-center justify-between gap-3">
+      <button type="submit" disabled class="btn-regular rounded-lg px-4 py-2 disabled:opacity-50">发表评论</button>
+      <a href={`https://admin.mourn.top/#comments?articleId=${encodeURIComponent(articleId)}`} class="text-sm text-(--content-meta) hover:text-(--primary)">管理本页评论</a>
+    </div>
+  </form>
+</public-comments>
+
+<script>
+  import { mountChallenge, publicRequest, type PublicConfig } from "@/utils/public-interactions";
+
+  type PublicComment = { id: string; articleId: string; parentId: string | null; name: string; text: string; deleted: boolean; createdAt: string };
+
+  if (!customElements.get("public-comments")) {
+    class PublicComments extends HTMLElement {
+      private controller?: AbortController;
+      private challenge?: { reset(): void; dispose(): void };
+      private token = "";
+      private parentId: string | null = null;
+      private busy = false;
+
+      connectedCallback() {
+        this.controller = new AbortController();
+        this.busy = false;
+        this.parentId = null;
+        const signal = this.controller.signal;
+        this.querySelector("form")?.addEventListener("submit", this.submit, { signal });
+        this.querySelector("[data-cancel-reply]")?.addEventListener("click", () => this.setReply(null), { signal });
+        void this.initialize(signal);
+      }
+
+      disconnectedCallback() {
+        this.controller?.abort();
+        this.challenge = undefined;
+        this.token = "";
+      }
+
+      private status(message: string) {
+        const status = this.querySelector<HTMLElement>("[data-comment-status]");
+        if (status) status.textContent = message;
+      }
+
+      private refreshButton() {
+        const button = this.querySelector<HTMLButtonElement>("button[type=submit]");
+        if (button) button.disabled = this.busy || !this.token;
+      }
+
+      private async initialize(signal: AbortSignal) {
+        try {
+          const config = await publicRequest<PublicConfig>("/api/public/config", { signal });
+          await this.loadComments(signal);
+          if (signal.aborted) return;
+          if (!config.commentsEnabled || !config.turnstileSiteKey) {
+            this.status("评论暂未开放，欢迎稍后再来。");
+            return;
+          }
+          const host = this.querySelector<HTMLElement>("[data-challenge]");
+          if (!host) return;
+          this.challenge = await mountChallenge(host, config.turnstileSiteKey, token => {
+            this.token = token;
+            this.refreshButton();
+          }, signal);
+          this.status("评论以纯文本显示，邮箱不会公开。");
+        } catch {
+          if (!signal.aborted) this.status("评论暂不可用，请稍后再试。");
+        }
+      }
+
+      private async loadComments(signal: AbortSignal) {
+        const data = await publicRequest<{ items: PublicComment[] }>(`/api/public/comments?articleId=${encodeURIComponent(this.dataset.articleId || "")}`, { signal });
+        if (signal.aborted) return;
+        const list = this.querySelector<HTMLElement>("[data-comment-list]");
+        if (!list) return;
+        list.replaceChildren();
+        if (!data.items.length) {
+          const empty = document.createElement("p");
+          empty.className = "text-sm text-(--content-meta)";
+          empty.textContent = "暂无评论，来留下第一条吧。";
+          list.append(empty);
+        }
+        for (const item of data.items) {
+          const entry = document.createElement("article");
+          entry.className = `rounded-lg border border-(--line-divider) p-3 ${item.parentId ? "ml-4" : ""}`;
+          const heading = document.createElement("p");
+          heading.className = "font-semibold text-(--btn-content)";
+          heading.textContent = item.name;
+          const time = document.createElement("time");
+          time.className = "text-xs text-(--content-meta)";
+          time.dateTime = item.createdAt;
+          time.textContent = new Date(item.createdAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" });
+          const body = document.createElement("p");
+          body.className = "whitespace-pre-wrap break-words mt-2 text-(--btn-content)";
+          body.textContent = item.deleted ? "[已删除]" : item.text;
+          entry.append(heading, time);
+          if (item.parentId) {
+            const replyTo = document.createElement("p");
+            replyTo.className = "text-xs text-(--content-meta)";
+            replyTo.textContent = `回复 ${data.items.find(parent => parent.id === item.parentId)?.name || "先前的评论"}`;
+            entry.append(replyTo);
+          }
+          entry.append(body);
+          if (!item.deleted) {
+            const reply = document.createElement("button");
+            reply.type = "button";
+            reply.className = "text-sm text-(--primary) mt-2";
+            reply.textContent = "回复";
+            reply.addEventListener("click", () => this.setReply(item), { signal });
+            entry.append(reply);
+          }
+          list.append(entry);
+        }
+      }
+
+      private setReply(comment: PublicComment | null) {
+        this.parentId = comment?.id || null;
+        const status = this.querySelector<HTMLElement>("[data-reply-status]");
+        if (status) {
+          status.textContent = comment ? `正在回复 ${comment.name}` : "";
+          status.classList.toggle("hidden", !comment);
+        }
+        this.querySelector("[data-cancel-reply]")?.classList.toggle("hidden", !comment);
+        if (comment) this.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+      }
+
+      private submit = async (event: Event) => {
+        event.preventDefault();
+        const form = this.querySelector<HTMLFormElement>("form");
+        if (!form || this.busy || !this.token || !form.reportValidity()) return;
+        const fields = new FormData(form);
+        const signal = this.controller?.signal;
+        this.busy = true;
+        this.refreshButton();
+        try {
+          await publicRequest("/api/public/comments", {
+            method: "POST",
+            signal,
+            body: JSON.stringify({ articleId: this.dataset.articleId, parentId: this.parentId, name: fields.get("name"), email: fields.get("email"), text: fields.get("text"), turnstileToken: this.token }),
+          });
+          if (signal?.aborted || !this.isConnected) return;
+          const text = form.querySelector<HTMLTextAreaElement>("textarea");
+          if (text) text.value = "";
+          this.setReply(null);
+          this.status("评论已发表。");
+          if (this.controller) {
+            try {
+              await this.loadComments(this.controller.signal);
+            } catch {
+              if (!signal?.aborted) this.status("评论已发表，列表暂时无法刷新。请稍后刷新页面查看。");
+            }
+          }
+        } catch (error) {
+          if (!signal?.aborted && this.isConnected) this.status(error instanceof Error ? error.message : "评论提交失败，请稍后再试。");
+        } finally {
+          if (!signal?.aborted) {
+            this.busy = false;
+            if (this.isConnected) this.challenge?.reset();
+            this.refreshButton();
+          }
+        }
+      };
+    }
+    customElements.define("public-comments", PublicComments);
+  }
+</script>

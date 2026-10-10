@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * POST /api/auth/login（Cloud Functions，Node.js 20）
  *
@@ -91,6 +92,7 @@ function json(body, status = 200, extraHeaders = {}) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	const { request, env } = context;
 	if (request.method !== "POST") {
 		return json({ error: "method_not_allowed" }, 405);

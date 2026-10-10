@@ -1,15 +1,28 @@
 ---
 import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import { analyticsConfig } from "@/config/analyticsConfig";
 
 interface Props {
 	class?: string;
 	style?: string;
 }
 const { class: className, style } = Astro.props;
+const umami = analyticsConfig.umamiAnalytics;
+let shareUrl = "";
+if (umami?.websiteId && umami.shareId && umami.scriptUrl) {
+	try {
+		const origin = new URL(umami.scriptUrl);
+		if (origin.protocol === "https:") {
+			shareUrl = `${origin.origin}/share/${encodeURIComponent(umami.shareId)}`;
+		}
+	} catch {
+		// Invalid or absent settings keep the existing statistics widget empty.
+	}
+}
 ---
 
-<WidgetLayout id="umami-stats" name="统计" class:list={["umami-stats-container", className, "cursor-pointer transition-opacity active:scale-95"]} {style}>
-    <a href="https://umami.seasir.top/share/cp5SqrNUOxbulLZt" target="_blank" rel="noopener noreferrer" class="block umami-link">
+<WidgetLayout id="umami-stats" name="统计" class:list={["umami-stats-container", className, { "cursor-pointer transition-opacity active:scale-95": Boolean(shareUrl) }]} {style}>
+    <a href={shareUrl || undefined} data-umami-share-url={shareUrl} target="_blank" rel="noopener noreferrer" class="block umami-link">
         <div class="text-center py-2">
             <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 umami-total-pageviews">-</div>
             <div class="text-sm text-neutral-500 dark:text-neutral-400">总浏览量</div>
@@ -25,11 +38,12 @@ const { class: className, style } = Astro.props;
             </div>
         </div>
     </a>
+    {!shareUrl && <p class="text-center text-xs text-neutral-500 dark:text-neutral-400 mt-2">统计暂未配置</p>}
 </WidgetLayout>
 
 <script>
 const UMAMI_CONFIG = {
-    shareUrl: 'https://umami.seasir.top/share/cp5SqrNUOxbulLZt',
+    shareUrl: document.querySelector('.umami-stats-container .umami-link')?.getAttribute('data-umami-share-url') || '',
 };
 
 let __UMAMI_INTERNAL = {
@@ -40,13 +54,8 @@ let __UMAMI_INTERNAL = {
     isReady: false
 };
 
-const FALLBACK_STATS = {
-    pageviews: 1000,
-    visits: 1000,
-    visitors: 1000,
-};
-
 async function initUmamiConfig() {
+    if (!UMAMI_CONFIG.shareUrl) return;
     try {
         const sharePath = UMAMI_CONFIG.shareUrl.split('/share/')[1];
         if (!sharePath) throw new Error('Invalid Umami Share URL');
@@ -132,7 +141,6 @@ async function fetchUmamiStats() {
     }
 
     if (!__UMAMI_INTERNAL.isReady) {
-        setStats(FALLBACK_STATS);
         return;
     }
 
@@ -160,7 +168,6 @@ async function fetchUmamiStats() {
 
     } catch (error) {
         console.error('Umami Fetch Failed:', error);
-        setStats(FALLBACK_STATS);
     }
 }
 
@@ -172,6 +179,7 @@ function startUmamiStats() {
 }
 
 function initUmamiStatsVisibility() {
+    if (!UMAMI_CONFIG.shareUrl) return;
     const containers = document.querySelectorAll('.umami-stats-container');
     const io = new IntersectionObserver((entries) => {
         let isAnyVisible = false;

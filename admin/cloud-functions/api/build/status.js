@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * GET /api/build/status
  * 读取 CNB 最近构建记录（main 分支 push 事件）。
@@ -7,6 +8,7 @@ import { requireAuth } from "../../_shared/requireAuth.js";
 import { errorResponse, jsonResponse, methodNotAllowed } from "../../_shared/response.js";
 
 export async function onRequestGet(context) {
+	return legacyServiceDisabled();
 	const auth = await requireAuth(context);
 	if (auth instanceof Response) return auth;
 
@@ -39,6 +41,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	if (context.request.method !== "GET") {
 		return methodNotAllowed(["GET"]);
 	}

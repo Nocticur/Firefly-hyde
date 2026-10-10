@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * GET / PUT /api/config
  * 站点配置读写通道（Cloud Functions，Node.js 20）：
@@ -421,6 +422,7 @@ async function handlePut(context) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	const method = context.request.method;
 	if (method === "GET") return handleGet(context);
 	if (method === "PUT") return handlePut(context);

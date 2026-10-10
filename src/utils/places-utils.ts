@@ -34,6 +34,25 @@ type ContentPlace = {
 	link?: string;
 };
 
+export interface ClientPlace {
+	province: string;
+	city: string;
+	district: string;
+	experience: string;
+	visitCount: number;
+	date: string;
+	endDate: string;
+	years: number[];
+	year: number;
+	source: "manual" | "timeline";
+	category: string;
+	lat: number | null;
+	lng: number | null;
+	images: string[];
+	link: string;
+	exact: boolean;
+}
+
 /** 未手写 category 时，按经历文案粗分类，供地图筛选胶囊使用 */
 export function inferPlaceCategory(place: {
 	experience?: string;
@@ -129,7 +148,7 @@ export function formatPlaceDateRange(place: PlaceRecord): string {
 	return start;
 }
 
-export function placeToClient(place: PlaceRecord, index = 0) {
+export function placeToClient(place: PlaceRecord, index = 0): ClientPlace {
 	const hasExact =
 		typeof place.lat === "number" &&
 		typeof place.lng === "number" &&

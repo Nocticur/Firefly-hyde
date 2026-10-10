@@ -6,17 +6,17 @@ import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import {
-  formatPlaceDateRange,
-  getPlaceCategories,
-  getPlaceYears,
-  getYearKeys,
-  placeToClient,
-  placesFromContent,
-  type PlaceRecord,
+	formatPlaceDateRange,
+	getPlaceCategories,
+	getPlaceYears,
+	getYearKeys,
+	type PlaceRecord,
+	placesFromContent,
+	placeToClient,
 } from "@/utils/places-utils";
 
 if (!siteConfig.pages.places) {
-  return Astro.redirect("/404/");
+	return Astro.redirect("/404/");
 }
 
 const now = new Date();
@@ -24,11 +24,11 @@ const currentYear = now.getFullYear();
 
 const placeEntries = await getCollection("places");
 const allPlaces: PlaceRecord[] = placesFromContent(
-  placeEntries.map((e) => e.data),
+	placeEntries.map((e) => e.data),
 );
 
 const sortedPlaces = [...allPlaces].sort(
-  (a, b) => b.date.getTime() - a.date.getTime(),
+	(a, b) => b.date.getTime() - a.date.getTime(),
 );
 
 const placeYears = getPlaceYears(allPlaces);
@@ -37,15 +37,15 @@ const placeCategories = getPlaceCategories(allPlaces);
 const sum = (arr: number[]) => arr.reduce((acc, num) => acc + num, 0);
 const totalVisitCount = sum(sortedPlaces.map((p) => p.visitCount || 1));
 const thisYearVisitCount = sortedPlaces.filter((p) => {
-  const y = p.date.getFullYear();
-  const endY = p.endDate?.getFullYear() ?? y;
-  return y <= currentYear && endY >= currentYear;
+	const y = p.date.getFullYear();
+	const endY = p.endDate?.getFullYear() ?? y;
+	return y <= currentYear && endY >= currentYear;
 }).length;
 const uniqueLocationCount = new Set(
-  sortedPlaces.map((p) => `${p.province}|${p.city || p.province}`),
+	sortedPlaces.map((p) => `${p.province}|${p.city || p.province}`),
 ).size;
 const uniqueProvinceCount = new Set(
-  sortedPlaces.map((p) => p.province).filter(Boolean),
+	sortedPlaces.map((p) => p.province).filter(Boolean),
 ).size;
 const latestPlace = sortedPlaces[0];
 
@@ -56,17 +56,17 @@ const displaySubtitle = i18n(I18nKey.placesSubtitle);
 const ownerLocation = siteConfig.placesMap?.ownerLocation ?? null;
 const amapKey = siteConfig.placesMap?.amapKey?.trim() || "";
 const amapSecurityJsCode =
-  siteConfig.placesMap?.amapSecurityJsCode?.trim() || "";
+	siteConfig.placesMap?.amapSecurityJsCode?.trim() || "";
 
 const placesI18n = {
-  mapLoadFailed: i18n(I18nKey.placesMapLoadFailed),
-  needAmapKey: i18n(I18nKey.placesNeedAmapKey),
-  filterAll: i18n(I18nKey.placesFilterAllFootprints),
-  areaHighlight: i18n(I18nKey.placesAreaHighlight),
-  clusterDisplay: i18n(I18nKey.placesClusterDisplay),
-  ownerLocation: i18n(I18nKey.placesMapOwnerLocation),
-  visitLabel: i18n(I18nKey.placesVisitLabel),
-  times: i18n(I18nKey.placesTimes),
+	mapLoadFailed: i18n(I18nKey.placesMapLoadFailed),
+	needAmapKey: i18n(I18nKey.placesNeedAmapKey),
+	filterAll: i18n(I18nKey.placesFilterAllFootprints),
+	areaHighlight: i18n(I18nKey.placesAreaHighlight),
+	clusterDisplay: i18n(I18nKey.placesClusterDisplay),
+	ownerLocation: i18n(I18nKey.placesMapOwnerLocation),
+	visitLabel: i18n(I18nKey.placesVisitLabel),
+	times: i18n(I18nKey.placesTimes),
 };
 ---
 

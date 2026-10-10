@@ -210,7 +210,7 @@ class IconLoader {
 	}
 }
 
-export const iconLoader = IconLoader.getInstance();
+export const iconLoader: IconLoader = IconLoader.getInstance();
 
 /**
  * 图标加载管理器
@@ -338,8 +338,9 @@ export function initIconLoader(): void {
 	}
 }
 
-export const loadIconify = (options?: IconifyLoadOptions) =>
+export const loadIconify = (options?: IconifyLoadOptions): Promise<void> =>
 	iconLoader.loadIconify(options);
-export const preloadIcons = (icons: string[]) => iconLoader.preloadIcons(icons);
-export const onIconsReady = (callback: () => void) =>
+export const preloadIcons = (icons: string[]): Promise<void> =>
+	iconLoader.preloadIcons(icons);
+export const onIconsReady = (callback: () => void): void =>
 	iconLoader.onLoad(callback);

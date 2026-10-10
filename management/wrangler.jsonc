@@ -1,0 +1,86 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nocticur-firefly-hyde-admin-development",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "preview_urls": false,
+  "assets": {
+    "directory": "./ui/dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "PLATFORM": "cloudflare",
+    "ENVIRONMENT": "development",
+    "ADMIN_ORIGIN": "http://localhost:8787",
+    "BLOG_ORIGIN": "http://localhost:4321",
+    "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
+    "GITHUB_BRANCH": "main",
+    "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog"
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "nocticur-admin-development", "migrations_dir": "migrations", "remote": false }
+  ],
+  "r2_buckets": [
+    { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-development", "remote": false },
+    { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-development", "remote": false }
+  ],
+  "triggers": { "crons": [] },
+  "env": {
+    "preview": {
+      "name": "nocticur-firefly-hyde-admin-preview",
+      "preview_urls": false,
+      "vars": {
+        "PLATFORM": "cloudflare",
+        "ENVIRONMENT": "preview",
+        "ADMIN_GITHUB_USER_ID": "285582250",
+        "ADMIN_ORIGIN": "https://admin-preview.mourn.top",
+        "BLOG_ORIGIN": "https://blog-preview.mourn.top",
+        "MEDIA_ORIGIN": "https://media-preview.mourn.top",
+        "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
+        "GITHUB_BRANCH": "preview",
+        "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog-preview"
+      },
+      // Insert only the real, isolated preview DB binding after it is created.
+      // Without DB the API fails closed; it never falls back to a local database.
+      "d1_databases": [],
+      "r2_buckets": [
+        { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-preview" },
+        { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-preview" }
+      ],
+      "triggers": { "crons": [] },
+      "queues": { "producers": [], "consumers": [] }
+    },
+    "production": {
+      "name": "nocticur-firefly-hyde-admin",
+      "preview_urls": false,
+      "vars": {
+        "PLATFORM": "cloudflare",
+        "ENVIRONMENT": "production",
+        "ADMIN_GITHUB_USER_ID": "285582250",
+        "ADMIN_ORIGIN": "https://admin.mourn.top",
+        "BLOG_ORIGIN": "https://blog.mourn.top",
+        "MEDIA_ORIGIN": "https://media.mourn.top",
+        "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
+        "GITHUB_BRANCH": "main",
+        "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog",
+        "GITHUB_BUILD_CHECK_APP_ID": "85455",
+        "BACKUP_PREFIX": "backups/"
+      },
+      // REQUIRED before deployment: add DB with the actual D1 database_id.
+      // No production resource ID is invented or stored in this template.
+      "d1_databases": [],
+      "r2_buckets": [
+        { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-production" },
+        { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-production" }
+      ],
+      "queues": {
+        "producers": [{ "binding": "TASKS", "queue": "nocticur-admin-tasks-production" }],
+        "consumers": [{ "queue": "nocticur-admin-tasks-production", "max_batch_size": 10, "max_batch_timeout": 5, "max_retries": 20, "dead_letter_queue": "nocticur-admin-tasks-failed-production" }]
+      },
+      "triggers": { "crons": ["* * * * *"] }
+    }
+  }
+}

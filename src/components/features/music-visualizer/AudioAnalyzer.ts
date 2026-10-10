@@ -69,11 +69,11 @@ export class AudioAnalyzer {
 	private beatHistoryIndex = 0;
 	private meteorCooldown = 0;
 
-	setEvents(events: AudioAnalyzerEvents) {
+	setEvents(events: AudioAnalyzerEvents): void {
 		this.events = events;
 	}
 
-	connect(audioEl: HTMLAudioElement) {
+	connect(audioEl: HTMLAudioElement): void {
 		if (this.connected && this.audioElement === audioEl) return;
 		this.audioElement = audioEl;
 
@@ -112,7 +112,7 @@ export class AudioAnalyzer {
 		}
 	}
 
-	disconnect() {
+	disconnect(): void {
 		if (this.source) {
 			this.source.disconnect();
 			this.source = null;
@@ -132,11 +132,11 @@ export class AudioAnalyzer {
 		this.connected = false;
 	}
 
-	isConnected() {
+	isConnected(): boolean {
 		return this.connected;
 	}
 
-	resume() {
+	resume(): void {
 		if (this.audioCtx?.state === "suspended") {
 			this.audioCtx.resume();
 		}
@@ -331,7 +331,7 @@ export class AudioAnalyzer {
 		}));
 	}
 
-	addClickRipple(x: number, z: number) {
+	addClickRipple(x: number, z: number): void {
 		this.events.onRipple?.(x, z, 1.5, false);
 	}
 }

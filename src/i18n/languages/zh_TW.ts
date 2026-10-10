@@ -91,7 +91,6 @@ export const zh_TW: Translation = {
 	[Key.booknavEmpty]: "暫無書籤",
 
 	// 專案展示頁
-	[Key.projects]: "專案",
 	[Key.projectsDescription]: "這裡展示我開發過的專案",
 	[Key.projectDetails]: "查看詳情",
 	[Key.projectBack]: "返回專案列表",

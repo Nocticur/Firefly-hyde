@@ -120,7 +120,10 @@ onMount(() => {
 	document.addEventListener("click", handleFirstClick);
 
 	window.addEventListener("fm:track", onTrackChange as EventListener);
-	window.addEventListener("fm:color-mode-changed", onColorModeChange as EventListener);
+	window.addEventListener(
+		"fm:color-mode-changed",
+		onColorModeChange as EventListener,
+	);
 
 	// 导航栏自动隐藏：初始显示3秒后渐隐，鼠标移到顶部区域渐显
 	const navbar = document.querySelector(".music-navbar");
@@ -167,7 +170,10 @@ onMount(() => {
 		themeObserver.disconnect();
 		document.removeEventListener("click", handleFirstClick);
 		window.removeEventListener("fm:track", onTrackChange as EventListener);
-		window.removeEventListener("fm:color-mode-changed", onColorModeChange as EventListener);
+		window.removeEventListener(
+			"fm:color-mode-changed",
+			onColorModeChange as EventListener,
+		);
 		clearTimeout(hideTimer);
 		document.removeEventListener("mousemove", onMouseMove);
 	};

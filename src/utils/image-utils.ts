@@ -1,6 +1,7 @@
 import { coverImageConfig } from "../config/coverImageConfig";
 import { siteConfig } from "../config/siteConfig";
 import type { ImageFormat } from "../types/config";
+import { managedSettings } from "./managed-config";
 
 const { randomCoverImage } = coverImageConfig;
 
@@ -37,7 +38,7 @@ export function processCoverImageSync(
 	seed?: string,
 ): string {
 	if (!image || image === "") {
-		return "";
+		return managedSettings.defaultCover ?? "";
 	}
 
 	if (image !== "api") {

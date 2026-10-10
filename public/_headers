@@ -1,0 +1,22 @@
+/api/*
+  Cache-Control: no-store
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+/release-manifest.json
+  Cache-Control: no-store
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+/publication-manifest.json
+  Cache-Control: no-store
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+/preview/*
+  Cache-Control: no-store
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+/adminmn/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+/admin/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex

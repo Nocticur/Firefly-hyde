@@ -93,7 +93,6 @@ export const en: Translation = {
 	[Key.booknavEmpty]: "No bookmarks yet.",
 
 	// Project showcase
-	[Key.projects]: "Projects",
 	[Key.projectsDescription]: "Here are the projects I've built",
 	[Key.projectDetails]: "View details",
 	[Key.projectBack]: "Back to projects",

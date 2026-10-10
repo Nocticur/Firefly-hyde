@@ -1,6 +1,5 @@
 ---
 import { profileConfig, siteConfig } from "@/config";
-import { externalMomentsConfig } from "@/config/externalMomentsConfig";
 
 interface Props {
 	class?: string;
@@ -11,10 +10,8 @@ const { class: className = "" } = Astro.props;
 const coverConfig = siteConfig.momentsCover;
 if (!coverConfig?.enable) return null;
 
-// 优先使用 externalMomentsConfig 的默认作者信息
-const avatar =
-	externalMomentsConfig.defaultAvatar || profileConfig.avatar || "/avatar.png";
-const name = externalMomentsConfig.defaultAuthor || profileConfig.name || "";
+const avatar = profileConfig.avatar || "/avatar.png";
+const name = profileConfig.name;
 const bio = Array.isArray(profileConfig.bio)
 	? profileConfig.bio[1] || profileConfig.bio[0] || ""
 	: profileConfig.bio || "";
@@ -103,7 +100,7 @@ const bio = Array.isArray(profileConfig.bio)
     max-width: calc(100% - 8rem);
     margin-left: auto;
     margin-top: 2rem;
-    white-space: nowrap;
+    white-space: pre-wrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }

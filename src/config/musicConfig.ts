@@ -1,4 +1,7 @@
-import type { MusicPlayerConfig, MusicVisualizerConfig } from "../types/musicConfig";
+import type {
+	MusicPlayerConfig,
+	MusicVisualizerConfig,
+} from "../types/musicConfig";
 
 // 音乐可视化配置
 export const musicVisualizerConfig: MusicVisualizerConfig = {

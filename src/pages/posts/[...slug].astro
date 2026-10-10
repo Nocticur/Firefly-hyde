@@ -26,9 +26,9 @@ import utc from "dayjs/plugin/utc";
 import CoverImage from "@/components/common/CoverImage.astro";
 import PostMetadata from "@/components/layout/PostMeta.astro";
 import RecommendedPost from "@/components/misc/RecommendedPost.astro";
-import AiSummary from "@/components/widget/AiSummary.astro";
 import SeriesNav from "@/components/misc/SeriesNav.astro";
 import SharePoster from "@/components/misc/SharePoster.svelte";
+import AiSummary from "@/components/widget/AiSummary.astro";
 import { coverImageConfig } from "@/config/coverImageConfig";
 import { licenseConfig } from "@/config/licenseConfig";
 import { profileConfig } from "@/config/profileConfig";
@@ -36,6 +36,7 @@ import { siteConfig } from "@/config/siteConfig";
 import { sponsorConfig } from "@/config/sponsorConfig";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
 import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
+import { getPagefindTitleTokens } from "@/utils/pagefind-title";
 import {
 	getAuthorAvatarUrl,
 	getSiteLogo,
@@ -66,6 +67,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const pagefindTitleTokens = getPagefindTitleTokens(entry.data.title);
 const { Content, headings } = await render(entry);
 
 const { remarkPluginFrontmatter } = await render(entry);
@@ -292,7 +294,8 @@ const seriesData = await getSeriesPosts(entry);
               <div
                 data-pagefind-body
                 data-pagefind-weight="10"
-                data-pagefind-meta="title"
+                data-pagefind-meta={pagefindTitleTokens ? "title,title_tokens[data-pagefind-title-tokens]" : "title"}
+                data-pagefind-title-tokens={pagefindTitleTokens}
                 class="mb-2 text-xl md:text-2xl font-bold leading-tight text-white"
               >
                 {entry.data.title}
@@ -369,7 +372,8 @@ const seriesData = await getSeriesPosts(entry);
             <div
               data-pagefind-body
               data-pagefind-weight="10"
-              data-pagefind-meta="title"
+              data-pagefind-meta={pagefindTitleTokens ? "title,title_tokens[data-pagefind-title-tokens]" : "title"}
+              data-pagefind-title-tokens={pagefindTitleTokens}
               class="transition w-full block font-bold mb-3
                         text-3xl md:text-[2.25rem]/[2.75rem]
                         text-black/90 dark:text-white/90

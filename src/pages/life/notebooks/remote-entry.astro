@@ -1,109 +1,21 @@
 ---
 import { Icon } from "astro-icon/components";
-import { externalNotebooksConfig } from "@/config/externalNotebooksConfig";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-
-export async function getStaticPaths() {
-	return [{ params: { notebook: "daily", id: "entry" } }];
-}
-
-const { notebook, id } = Astro.params;
 ---
 
 <MainGridLayout title="远程笔记" description="查看远程笔记详情">
 	<div class="remote-entry-container">
 		<div class="entry-header">
-			<button id="back-btn" class="back-btn">
+			<a href="/" class="back-btn">
 				<Icon name="material-symbols:arrow-back" />
-				返回列表
-			</button>
+				返回首页
+			</a>
 		</div>
-
-		<div class="entry-content" id="entry-content">
-			<div class="loading-state">
-				<Icon name="svg-spinners:ring-resize" class="loading-icon" />
-				<span>加载中...</span>
-			</div>
+		<div class="entry-content">
+			<div class="error-state"><p>暂无公开笔记。</p></div>
 		</div>
 	</div>
 </MainGridLayout>
-
-<script is:inline>
-	const CONFIG = {
-		notebookGists: externalNotebooksConfig.notebookGists,
-	};
-
-	function getUrlParam(name) {
-		const urlParams = new URLSearchParams(window.location.search);
-		return urlParams.get(name);
-	}
-
-	async function loadEntry() {
-		const notebook = getUrlParam("nb") || "{notebook}";
-		const id = getUrlParam("id") || "{id}";
-		const gistId = CONFIG.notebookGists[notebook];
-
-		if (!gistId) {
-			document.getElementById("entry-content").innerHTML = `
-				<div class="error-state">
-					<Icon name="material-symbols:error" />
-					<p>笔记本未配置</p>
-				</div>
-			`;
-			return;
-		}
-
-		try {
-			const response = await fetch(`https://gist.githubusercontent.com/raw/${gistId}/notebooks-entries.json`);
-			
-			if (!response.ok) {
-				throw new Error('Failed to fetch');
-			}
-
-			const data = await response.json();
-			const entry = data.entries.find(e => e.id === id);
-
-			if (!entry) {
-				document.getElementById("entry-content").innerHTML = `
-					<div class="error-state">
-						<Icon name="material-symbols:error" />
-						<p>笔记不存在</p>
-					</div>
-				`;
-				return;
-			}
-
-			document.title = entry.title;
-			document.getElementById("entry-content").innerHTML = `
-				<article class="entry-article">
-					<h1 class="entry-title">${entry.title}</h1>
-					<div class="entry-meta">
-						<span class="entry-date">📅 ${entry.date}</span>
-						<span class="entry-notebook">📒 ${entry.notebook}</span>
-					</div>
-					<div class="entry-body" id="entry-body"></div>
-				</article>
-			`;
-
-			document.getElementById("entry-body").innerHTML = marked.parse(entry.content);
-		} catch (error) {
-			document.getElementById("entry-content").innerHTML = `
-				<div class="error-state">
-					<Icon name="material-symbols:error" />
-					<p>加载失败: ${error.message}</p>
-				</div>
-			`;
-		}
-	}
-
-	document.getElementById("back-btn").addEventListener("click", () => {
-		window.history.back();
-	});
-
-	document.addEventListener('DOMContentLoaded', loadEntry);
-</script>
-
-<script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
 	.remote-entry-container {

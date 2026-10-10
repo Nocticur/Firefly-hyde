@@ -2,8 +2,8 @@
 import { Icon } from "astro-icon/components";
 
 interface Props {
-  description: string;
-  descriptionSource?: "manual" | "ai" | string;
+	description: string;
+	descriptionSource?: "manual" | "ai" | string;
 }
 
 const { description, descriptionSource = "ai" } = Astro.props;
@@ -11,8 +11,8 @@ const { description, descriptionSource = "ai" } = Astro.props;
 const isManual = descriptionSource === "manual";
 const sourceLabel = isManual ? "人工编写" : "AI 摘要";
 const iconName = isManual
-  ? "material-symbols:edit-note"
-  : "material-symbols:psychiatry";
+	? "material-symbols:edit-note"
+	: "material-symbols:psychiatry";
 ---
 
 <div class="ai-summary-wrapper rounded-xl mb-6">

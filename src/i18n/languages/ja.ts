@@ -92,7 +92,6 @@ export const ja: Translation = {
 	[Key.booknavEmpty]: "ブックマークがありません",
 
 	// プロジェクト展示ページ
-	[Key.projects]: "プロジェクト",
 	[Key.projectsDescription]: "私が開発したプロジェクトです",
 	[Key.projectDetails]: "詳細を見る",
 	[Key.projectBack]: "プロジェクト一覧へ戻る",

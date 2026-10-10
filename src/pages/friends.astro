@@ -1,22 +1,24 @@
 ---
 import { getEntry, render } from "astro:content";
+// 友链“xxx 次”点击计数徽章的数据源组件（内部即 Umami 指标聚合逻辑，文件名沿用历史命名）
+import MicrosoftClarity from "@components/analytics/MicrosoftClarity.astro";
 import Comment from "@components/comment/index.astro";
 // import FriendsMagicLink from "@components/friends/FriendsMagicLink.astro";
 import Markdown from "@components/common/Markdown.astro";
 import { Icon } from "astro-icon/components";
+import PublicFriendController from "@/components/friends/PublicFriendController.astro";
 import {
 	analyticsConfig,
 	commentConfig,
 	friendsPageConfig,
 	getEnabledFriends,
+	profileConfig,
 	siteConfig,
 } from "@/config";
 import friendsLatencySnapshot from "@/data/friends-latency-snapshot.json";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-// 友链“xxx 次”点击计数徽章的数据源组件（内部即 Umami 指标聚合逻辑，文件名沿用历史命名）
-import MicrosoftClarity from "@components/analytics/MicrosoftClarity.astro";
 import "@/styles/pages/common.css";
 import "@/styles/pages/friends.css";
 import "@/styles/friends-magic-link.css";
@@ -135,11 +137,14 @@ const friendsAiRecommendation = friendsAiRecommendationSegments
 
 // ==================== 自助申请友链模块（保留勿动） ====================
 // 站点信息和注意事项（带默认值）
-const siteInfo = friendsPageConfig.site ?? {
-	name: "",
-	desc: "",
-	url: "",
-	avatar: "",
+const siteInfo = {
+	name: siteConfig.title,
+	desc: siteConfig.description || "",
+	url: siteConfig.site_url,
+	avatar: new URL(
+		profileConfig.avatar || "/assets/images/logo-nocticur.png",
+		siteConfig.site_url,
+	).href,
 };
 const notes = friendsPageConfig.notes ?? [];
 
@@ -232,7 +237,7 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
 
       <!-- 搜索框 -->
       {
-        items.length > 0 && (
+        (
           <friend-filter class="mb-6">
             <div class="relative mb-3">
               <Icon is:inline
@@ -700,15 +705,17 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
                       <input type="url" name="imgUrl" required placeholder="https://example.com/avatar.png" class="w-full rounded-lg bg-black/5 dark:bg-white/5 border border-(--line-divider) px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-(--primary)/30 focus:border-(--primary) transition-colors" />
                     </div>
                     <div>
-                      <label class="block text-xs font-medium text-neutral-900 dark:text-neutral-100 mb-1">联系邮箱（可选）</label>
-                      <input type="email" name="email" placeholder="方便站长必要时联系" class="w-full rounded-lg bg-black/5 dark:bg-white/5 border border-(--line-divider) px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-(--primary)/30 focus:border-(--primary) transition-colors" />
+                      <label class="block text-xs font-medium text-neutral-900 dark:text-neutral-100 mb-1">联系邮箱（不会公开）</label>
+                      <input type="email" name="email" required maxlength="254" placeholder="用于接收申请结果" class="w-full rounded-lg bg-black/5 dark:bg-white/5 border border-(--line-divider) px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-(--primary)/30 focus:border-(--primary) transition-colors" />
                     </div>
                     <div>
                       <label class="block text-xs font-medium text-neutral-900 dark:text-neutral-100 mb-1">留言（可选）</label>
-                      <textarea name="message" rows="2" placeholder="例如已添加本站友链的页面地址" class="w-full rounded-lg bg-black/5 dark:bg-white/5 border border-(--line-divider) px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-(--primary)/30 focus:border-(--primary) transition-colors resize-none"></textarea>
+                      <textarea name="message" maxlength="2000" rows="2" placeholder="例如已添加本站友链的页面地址" class="w-full rounded-lg bg-black/5 dark:bg-white/5 border border-(--line-divider) px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-(--primary)/30 focus:border-(--primary) transition-colors resize-none"></textarea>
                     </div>
+                    <div data-friend-challenge></div>
+                    <p data-friend-status class="text-sm text-(--content-meta)" role="status">正在加载友链申请…</p>
                     <div class="pt-1">
-                      <button type="button" id="friend-submit-btn" class="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-(--primary) text-white hover:opacity-90 transition-opacity text-sm font-medium cursor-pointer w-full disabled:opacity-50 disabled:pointer-events-none">
+                      <button type="submit" disabled id="friend-submit-btn" class="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-(--primary) text-white hover:opacity-90 transition-opacity text-sm font-medium cursor-pointer w-full disabled:opacity-50 disabled:pointer-events-none">
                         <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2657" width="16" height="16"><path d="M711.5008 695.9872l-268.4672-83.0208L711.5008 302.592l-351.488 310.3744L153.6 530.688 814.72 179.2l-103.2192 516.7872z m-268.4672 124.1344v-145.0752l82.9952 41.1136-82.9952 103.9616z" fill="#ffffff" p-id="2658"></path></svg>
                         <span>提交申请</span>
                       </button>
@@ -1587,186 +1594,6 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
       customElements.define("recommended-star-flow", RecommendedStarFlow);
     }
 
-  </script>
-
-  <script is:inline>
-    // 申请友链表单逻辑
-    function initFriendForm() {
-      // 获取表单、提交按钮、成功提示、步骤容器
-      var form = document.getElementById('friend-link-form');
-      var submitBtn = document.getElementById('friend-submit-btn');
-      var successEl = document.getElementById('friend-form-success');
-      var stepsEl = document.getElementById('friend-apply-steps');
-
-      // 防止重复初始化（swup 切换页面时会再次触发）
-      if (!form || !submitBtn || submitBtn.dataset.initialized) return;
-
-      // 防重复提交标记
-      var isSubmitting = false;
-
-      submitBtn.dataset.initialized = 'true';
-      submitBtn.addEventListener('click', async function() {
-        if (isSubmitting) return;
-        isSubmitting = true;
-
-        // 读取表单字段并去掉首尾空格
-        var title = form.querySelector('input[name="title"]').value.trim();
-        var desc = form.querySelector('input[name="desc"]').value.trim();
-        var siteUrl = form.querySelector('input[name="siteUrl"]').value.trim();
-        var imgUrl = form.querySelector('input[name="imgUrl"]').value.trim();
-        var email = form.querySelector('input[name="email"]').value.trim();
-        var message = form.querySelector('textarea[name="message"]').value.trim();
-
-        // 校验：任一必填项为空则弹 toast 并返回
-        if (!title || !desc || !siteUrl || !imgUrl) {
-          isSubmitting = false;
-          var toast = document.createElement('div');
-          toast.className = 'cc-toast error';
-          toast.textContent = '请填写完整信息';
-          document.body.appendChild(toast);
-          setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
-          return;
-        }
-
-        // 进入提交状态：禁用按钮、文案改为"提交中..."
-        submitBtn.disabled = true;
-        submitBtn.querySelector('span').textContent = '提交中...';
-
-        try {
-          // 向后端提交申请，状态默认为 pending
-          var res = await fetch('https://seasir.top/api/friends', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: title, desc: desc, siteUrl: siteUrl, imgUrl: imgUrl, email: email, message: message })
-          });
-
-          var data = await res.json();
-          if (!res.ok) throw new Error(data.message || '提交失败');
-          if (!data.success) throw new Error(data.message || '提交失败');
-          // 提交成功：隐藏步骤、显示成功提示
-          if (stepsEl) stepsEl.style.display = 'none';
-          successEl.classList.remove('hidden');
-          successEl.style.display = 'flex';
-        } catch (err) {
-          // 网络/后端错误：转换文案并弹 toast
-          var msg = err.message === 'Failed to fetch' ? '网络连接失败，请检查网络' : (err.message || '提交失败，请稍后重试');
-          var toast = document.createElement('div');
-          toast.className = 'cc-toast error';
-          toast.textContent = msg;
-          document.body.appendChild(toast);
-          setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
-        } finally {
-          // 恢复按钮状态
-          isSubmitting = false;
-          submitBtn.disabled = false;
-          submitBtn.querySelector('span').textContent = '提交申请';
-        }
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initFriendForm);
-    } else {
-      initFriendForm();
-    }
-
-    document.addEventListener('swup:contentReplaced', initFriendForm);
-  </script>
-
-  {/* 友链“xxx 次”点击计数徽章数据源：组件会聚合 Umami 的 friend-link-click / outbound-link-click
-      事件并填充页面上所有 [data-friend-clicks-for] 徽章；仅配置齐 shareId + scriptUrl 时挂载 */}
-  {umamiAnalytics?.shareId && umamiShareApiBase && (
-    <MicrosoftClarity
-      shareId={umamiAnalytics.shareId}
-      shareApiBase={umamiShareApiBase}
-    />
-  )}
-
-  {/* latencyResults：构建时延迟快照注入浏览器端，供动态卡片（远程 API 友链）渲染延迟徽章 */}
-  <script is:inline define:vars={{ latencyResults: latencySnapshot.results }}>
-    function renderFriendCard(item) {
-      var normalizeFriendUrl = function(url) {
-        return String(url || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '').toLowerCase();
-      };
-      var friendEntry = latencyResults[normalizeFriendUrl(item.siteUrl)];
-      var friendClicks = friendEntry && typeof friendEntry.clicks === 'number' ? friendEntry.clicks : null;
-      var renderFriendLatency = function() {
-        var key = normalizeFriendUrl(item.siteUrl);
-        var entry = key ? latencyResults[key] : undefined;
-        var state = entry && entry.state ? entry.state : 'checking';
-        var value = state === 'down' ? '失联' : (entry && entry.milliseconds ? entry.milliseconds + 'ms' : '待探测');
-        return '<span class="friend-latency friend-latency--' + state + '" data-friend-latency-for="' + item.siteUrl + '" data-friend-latency-name="' + item.title + '" data-friend-latency-state="' + state + '" title="' + item.title + '，最近一次东八区定时 GET 探测" aria-label="' + item.title + '，最近一次东八区定时 GET 探测">' +
-          '<span class="friend-latency-dot" aria-hidden="true"></span>' +
-          '<span data-friend-latency-value aria-live="polite">' + value + '</span>' +
-        '</span>';
-      };
-      var tagsHtml = '';
-      if (item.tags && item.tags.length > 0) {
-        tagsHtml = '<div class="flex flex-wrap gap-1 mt-1">' +
-          item.tags.slice(0, 3).map(function(tag) {
-            return '<span class="text-[0.65rem] px-1.5 py-0.5 rounded bg-(--btn-regular-bg-hover) text-(--content-meta) transition-colors duration-300">' + tag + '</span>';
-          }).join('') +
-        '</div>';
-      }
-      return '<a href="' + item.siteUrl + '" target="_blank" rel="noopener noreferrer" data-umami-event="friend-link-click" data-tags="' + (item.tags ? item.tags.join(',') : '') + '" class="friend-card friend-list-card group flex items-center gap-3 p-2.5 rounded-xl border border-(--line-divider) hover:border-(--primary) hover:bg-(--card-bg) transition-all duration-300 hover:shadow-lg relative overflow-hidden animate-fade-in-up">' +
-        '<div class="absolute inset-0 bg-(--primary) opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>' +
-        '<div class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-black/5 dark:border-white/5 group-hover:scale-105 transition-transform duration-300">' +
-          '<img src="' + item.imgUrl + '" alt="' + item.title + '" class="w-full h-full object-cover" loading="lazy" />' +
-        '</div>' +
-        '<div class="friend-card-content relative z-10 grow min-w-0 flex flex-col justify-center gap-0.5">' +
-          '<div class="flex items-center justify-between">' +
-            '<div class="font-bold text-base text-(--btn-content) group-hover:text-(--primary) transition-colors truncate">' + item.title + '</div>' +
-          '</div>' +
-          '<div class="friend-card-description text-sm line-clamp-1" title="' + item.desc + '">' + item.desc + '</div>' +
-          tagsHtml +
-        '</div>' +
-        '<span class="friend-click-count" data-friend-clicks-for="' + item.siteUrl + '" title="从本站点击次数" aria-label="' + item.title + '，从本站点击 ' + (friendClicks != null ? friendClicks.toLocaleString('zh-CN') : 0) + ' 次">' +
-          '<svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8q-1.65 0-2.825 1.175T8 12q0 1.125.563 2.075t1.562 1.475q.4.2.563.587t-.013.788q-.175.35-.525.525t-.7 0q-1.575-.75-2.512-2.225T6 12q0-2.5 1.75-4.25T12 6q1.775 0 3.263.938T17.475 9.5q.15.35-.012.7t-.513.5q-.4.175-.8 0t-.6-.575q-.525-1-1.475-1.562T12 8m0-4Q8.65 4 6.325 6.325T4 12q0 3.15 2.075 5.4t5.2 2.55q.425.05.737.375t.288.75t-.313.7t-.712.25q-1.95-.125-3.638-.975t-2.95-2.213t-1.975-3.125T2 12q0-2.075.788-3.9t2.137-3.175T8.1 2.788T12 2q3.925 0 6.838 2.675t3.187 6.6q.05.4-.237.688t-.713.312t-.762-.275t-.388-.725q-.375-3-2.612-5.137T12 4m7.55 17.5l-3.3-3.275l-.75 2.275q-.125.35-.475.338t-.475-.363L12.275 12.9q-.1-.275.125-.5t.5-.125l7.575 2.275q.35.125.363.475t-.338.475l-2.275.75l3.3 3.3q.425.425.425.975t-.425.975t-.987.425t-.988-.425"/></svg>' +
-          '<span data-friend-clicks-value aria-live="polite">' + (friendClicks != null ? friendClicks.toLocaleString('zh-CN') : '…') + '</span>' +
-          '<span class="friend-click-count-unit" aria-hidden="true">次</span>' +
-        '</span>' +
-        renderFriendLatency() +
-      '</a>';
-    }
-
-    function loadDynamicFriends() {
-      var loading = document.getElementById('friends-loading');
-      var grid = document.getElementById('friends-grid');
-      if (!grid) return;
-
-      if (loading) loading.classList.remove('hidden');
-
-      fetch('https://seasir.top/api/friends')
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          var friends = data.items;
-          if (Array.isArray(friends) && friends.length > 0) {
-            friends.sort(function(a, b) {
-              return (Number(b.weight) || 0) - (Number(a.weight) || 0);
-            });
-            var html = friends.map(function(item) {
-              return renderFriendCard(item);
-            }).join('');
-            grid.insertAdjacentHTML('beforeend', html);
-          }
-        })
-        .catch(function(err) {
-          console.error('加载动态友链失败:', err);
-        })
-        .finally(function() {
-          if (loading) loading.classList.add('hidden');
-          // 动态卡片插入后触发 Umami 指标组件重算“xxx 次”徽章（组件已挂载时才存在该全局钩子）
-          if (window.__rainztUmamiMetrics) window.__rainztUmamiMetrics();
-        });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadDynamicFriends);
-    } else {
-      loadDynamicFriends();
-    }
-
-    document.addEventListener('swup:contentReplaced', loadDynamicFriends);
   </script>
 
   <script is:inline>
@@ -3389,4 +3216,5 @@ const copyAllOnClick = `navigator.clipboard.writeText('站点名称：${escapedS
       opacity: 1;
     }
   </style>
+  <PublicFriendController />
 </MainGridLayout>

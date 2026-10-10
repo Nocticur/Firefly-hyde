@@ -8,7 +8,9 @@ import MomentsCover from "@/components/moments/MomentsCover.astro";
 import { externalMomentsConfig } from "@/config/externalMomentsConfig";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
-const moments = await getCollection("moments");
+const moments = externalMomentsConfig.localContentEnabled
+	? await getCollection("moments")
+	: [];
 const sortedMoments = moments
 	.filter((m) => !m.data.pinned)
 	.sort((a, b) => b.data.published.getTime() - a.data.published.getTime());

@@ -1,7 +1,7 @@
 ---
 import GoogleAnalytics from "@components/analytics/GoogleAnalytics.astro";
 import La51Analytics from "@components/analytics/La51Analytics.astro";
-import MicrosoftClarity from "@components/analytics/MicrosoftClarity.astro";
+import UmamiMetrics from "@components/analytics/MicrosoftClarity.astro";
 import UmamiAnalytics from "@components/analytics/UmamiAnalytics.astro";
 import CodeGroupManager from "@components/features/CodeGroupManager.astro";
 import FancyboxManager from "@components/features/FancyboxManager.astro";
@@ -14,7 +14,6 @@ import ScrollProgressBar from "@components/features/ScrollProgressBar.astro";
 import TitleChange from "@components/features/TitleChange.astro"; //网页标题切换组件
 import WavesEffect from "@components/features/WavesEffect.astro";
 import ConfigCarrier from "@components/layout/ConfigCarrier.astro";
-
 import {
 	analyticsConfig,
 	backgroundWallpaper,
@@ -35,6 +34,7 @@ import {
 import { defaultFavicons } from "@/constants/icon";
 import type { Favicon } from "@/types/config";
 import { isHomePage } from "@/utils/layout-utils";
+import { managedSettings } from "@/utils/managed-config";
 import { getAuthorAvatarUrl, getSiteLogo } from "@/utils/schema-image";
 import { buildSiteGraph, toAbsoluteUrl } from "@/utils/schema-utils";
 import { getOgLocale } from "@/utils/site-config-utils";
@@ -117,8 +117,9 @@ if (title) {
 const favicons: Favicon[] =
 	siteConfig.favicon.length > 0 ? siteConfig.favicon : defaultFavicons;
 // apple-touch-icon：优先取 favicon 中的 png，否则取第一个
-const appleTouchIcon =
-	favicons.find((f) => f.src.toLowerCase().endsWith(".png")) ?? favicons[0];
+const appleTouchIcon = managedSettings.icons?.["apple-touch-icon.png"]
+	? { src: managedSettings.icons["apple-touch-icon.png"], sizes: "180x180" }
+	: (favicons.find((f) => f.src.toLowerCase().endsWith(".png")) ?? favicons[0]);
 
 // const siteLang = siteConfig.lang.replace('_', '-')
 if (!lang) {
@@ -171,14 +172,14 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
     {analyticsConfig?.googleAnalyticsId && (
         <link rel="preconnect" href="https://www.googletagmanager.com" />
     )}
-    {analyticsConfig?.microsoftClarityId && (
-        <link rel="preconnect" href="https://www.clarity.ms" />
-    )}
     {analyticsConfig?.googleAnalyticsId && (
             <GoogleAnalytics analyticsId={analyticsConfig.googleAnalyticsId} />
     )}
-    {analyticsConfig?.microsoftClarityId && (
-            <MicrosoftClarity clarityId={analyticsConfig.microsoftClarityId} />
+    {analyticsConfig?.umamiAnalytics?.shareId && analyticsConfig.umamiAnalytics.scriptUrl && (
+            <UmamiMetrics
+              shareId={analyticsConfig.umamiAnalytics.shareId}
+              shareApiBase={new URL(analyticsConfig.umamiAnalytics.scriptUrl).origin}
+            />
     )}
         {analyticsConfig?.umamiAnalytics?.websiteId && (
           <UmamiAnalytics
@@ -291,6 +292,8 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
         sizes={appleTouchIcon.sizes}
       />
     )}
+
+    {(managedSettings.icons?.["web-app-manifest-192x192.png"] || managedSettings.icons?.["web-app-manifest-512x512.png"]) && <link rel="manifest" href="/site.webmanifest" />}
 
     <!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 -->
     <!-- 注：静态图片（ImageWrapper 组件、Markdown 正文图）已在构建期加好 referrerpolicy；

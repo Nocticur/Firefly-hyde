@@ -1,8 +1,19 @@
 {
-	"name": "firefly",
-	"compatibility_date": "2025-01-01",
-	"compatibility_flags": ["nodejs_compat"],
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "nocticur-firefly-hyde-blog",
+	"main": "workers/blog.js",
+	"compatibility_date": "2026-07-01",
+	"version_metadata": { "binding": "VERSION" },
 	"assets": {
-		"directory": "./dist"
-	}
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"run_worker_first": true,
+		"not_found_handling": "404-page"
+	},
+	"services": [
+		{
+			"binding": "ADMIN",
+			"service": "nocticur-firefly-hyde-admin"
+		}
+	]
 }

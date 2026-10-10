@@ -1,0 +1,29 @@
+{
+  "name": "@nocticur/management-service",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "dev": "tsx watch src/node.ts",
+    "start": "tsx src/node.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build:worker": "wrangler deploy --dry-run --outdir .output/worker",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "baseline:import": "tsx scripts/import-baseline.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.4",
+    "hono": "4.13.13",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261009.1",
+    "@types/node": "26.6.4",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
+  }
+}

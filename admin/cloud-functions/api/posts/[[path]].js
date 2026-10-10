@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * /api/posts/<相对路径>  catch-all
  *   GET    读取单篇文章（走 CNB raw + 解析 frontmatter）
@@ -132,6 +133,7 @@ async function handleDelete(context, rel) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	const auth = await requireAuth(context);
 	if (auth instanceof Response) return auth;
 

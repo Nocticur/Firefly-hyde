@@ -1,4 +1,5 @@
 import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
+import { applyManagedWallpaper } from "../utils/managed-config";
 
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 全屏透明，"none" 纯色背景无壁纸
@@ -46,7 +47,6 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			"assets/images/DesktopWallpaper/拾光_Windows聚焦_c71ded2207c5c403.webp",
 			"assets/images/DesktopWallpaper/拾光_Windows聚焦_044bdf8a23f7808d.webp",
 			"assets/images/DesktopWallpaper/拾光_Windows聚焦_b1d8c2ec7ddde10a.webp",
-
 		],
 		// 移动背景图片（支持单张或多张随机）
 		// mobile: "assets/images/MobileWallpaper/m1.avif",
@@ -78,11 +78,11 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			// 是否启用主页横幅文字
 			enable: true,
 			// 主页横幅主标题
-			title: "Hyde Blog 🎉",
+			title: "Nocticur的博客",
 			// 主页横幅主标题字体大小
 			titleSize: "4.5rem",
 			// 主页横幅副标题
-			subtitle: ["欲买桂花同载酒，终不似，少年游！", "花有重开日，人无再少年"],
+			subtitle: ["向 夜 驰 行 ， 不 问 喧 嚣\n身 沉 暮 色 ， 心 赴 归 途"],
 			// 主页横幅副标题字体大小
 			subtitleSize: "1.5rem",
 			typewriter: {
@@ -105,18 +105,18 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 				{
 					name: "GitHub",
 					icon: "fa7-brands:github",
-					url: "https://github.com/Seasir-Hyde/Firefly-hyde",
+					url: "https://github.com/Nocticur",
 					showName: true,
 				},
 				{
 					name: "Email",
 					icon: "fa7-solid:envelope",
-					url: "seasir666@gmail.com",
+					url: "mailto:nocticur@mourn.top",
 				},
 				{
 					name: "Sponsor",
 					icon: "material-symbols:favorite",
-					url: "https://seasir.top/sponsor/",
+					url: "/sponsor/",
 				},
 				{
 					name: "RSS",
@@ -235,3 +235,5 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		},
 	},
 };
+
+applyManagedWallpaper(backgroundWallpaper);

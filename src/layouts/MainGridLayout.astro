@@ -52,7 +52,7 @@ interface Props {
 	heading?: string;
 }
 
-const backgroundImages = getBackgroundImages();
+const backgroundImages = getBackgroundImages(Astro.url.pathname);
 
 const {
 	title,

@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content";
 import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+import { externalMomentsConfig } from "@/config/externalMomentsConfig";
 import {
 	dynamicSearchText,
 	dynamicSlug,
@@ -10,7 +11,9 @@ const markdownImagePattern = /!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)/g;
 
 export async function GET(): Promise<Response> {
 	const processor = await createMarkdownProcessor();
-	const dynamics = sortDynamics(await getCollection("dynamic"));
+	const dynamics = externalMomentsConfig.localContentEnabled
+		? sortDynamics(await getCollection("dynamic"))
+		: [];
 	const data = await Promise.all(
 		dynamics.map(async (entry) => {
 			const images: Array<{ alt: string; src: string; title?: string }> = [];
@@ -38,6 +41,7 @@ export async function GET(): Promise<Response> {
 	return new Response(JSON.stringify(data), {
 		headers: {
 			"Content-Type": "application/json; charset=utf-8",
+			"Cache-Control": "no-store",
 		},
 	});
 }

@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * /api/posts
  *   GET  文章列表：递归列出 src/content/blog 下所有 markdown（不含正文）
@@ -25,6 +26,7 @@ import {
 const BLOG_DIR = "src/content/posts";
 
 export async function onRequestGet(context) {
+	return legacyServiceDisabled();
 	const auth = await requireAuth(context);
 	if (auth instanceof Response) return auth;
 
@@ -80,6 +82,7 @@ export async function onRequestGet(context) {
  * 无草稿时不写仓库，返回 published: []。
  */
 export async function onRequestPost(context) {
+	return legacyServiceDisabled();
 	const auth = await requireAuth(context);
 	if (auth instanceof Response) return auth;
 
@@ -174,6 +177,7 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	const method = context.request.method;
 	if (method === "GET") return onRequestGet(context);
 	if (method === "POST") return onRequestPost(context);

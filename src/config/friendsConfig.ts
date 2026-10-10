@@ -1,4 +1,17 @@
+import managedFriends from "../constants/managed-friends.json";
 import type { FriendLink, FriendsPageConfig } from "../types/friendsConfig";
+import { profileConfig } from "./profileConfig";
+import { siteConfig } from "./siteConfig";
+
+interface ManagedFriend {
+	id: string;
+	name: string;
+	url: string;
+	avatar: string;
+	description: string;
+	group: string;
+	order: number;
+}
 
 // 可以在src/content/spec/friends.md中编写友链页面下方的自定义内容
 
@@ -11,7 +24,7 @@ export const friendsPageConfig: FriendsPageConfig = {
 	description: "",
 
 	// 是否显示底部自定义内容（friends.mdx 中的内容）
-	showCustomContent: false, 	// 本站信息、申请表单、注意事项已内联，故关闭
+	showCustomContent: false, // 本站信息、申请表单、注意事项已内联，故关闭
 
 	// 是否显示评论区，需要先在commentConfig.ts启用评论系统
 	showComment: false,
@@ -21,10 +34,13 @@ export const friendsPageConfig: FriendsPageConfig = {
 
 	// 本站点信息（用于友链申请表单，请改为你自己的站点信息）
 	site: {
-		name: "Hyde Blog",
-		desc: "人心中的成见是一座大山",
-		url: "https://seasir.top",
-		avatar: "https://seasir.top/assets/avatar.avif",
+		name: siteConfig.title,
+		desc: siteConfig.description || "",
+		url: siteConfig.site_url,
+		avatar: new URL(
+			profileConfig.avatar || "/assets/images/logo-nocticur.png",
+			siteConfig.site_url,
+		).href,
 	},
 
 	// 注意事项
@@ -76,7 +92,7 @@ export const friendsConfig: FriendLink[] = [
 		title: "宇阳",
 		desc: "记录所学知识，缩短和大神的差距！",
 		siteurl: "https://liuyuyang.net",
-		imgurl:"https://q1.qlogo.cn/g?b=qq&nk=3311118881&s=640",
+		imgurl: "https://q1.qlogo.cn/g?b=qq&nk=3311118881&s=640",
 		tags: ["Blog"],
 		weight: 8,
 		enabled: true,
@@ -94,7 +110,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "One",
 		desc: "上海修车spa足浴推拿反差狂魔one哥",
 		siteurl: "https://onedayxyy.cn/",
-		imgurl:"https://img.onedayxyy.cn/images/Teek/Teekwebsite/xyy-logo.avif?w=150&h=150&fit=crop&fm=webp&q=80",
+		imgurl:
+			"https://img.onedayxyy.cn/images/Teek/Teekwebsite/xyy-logo.avif?w=150&h=150&fit=crop&fm=webp&q=80",
 		tags: ["Blog"],
 		weight: 8,
 		enabled: true,
@@ -121,7 +138,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "楠枝小笺",
 		desc: "安安静静地存在，就已经很好了。",
 		siteurl: "https://www.nannax.top/",
-		imgurl:"https://www.nanzhiy.cn/themes/Ethereal/assets/images/demo-avatar.png?image_process=resize,w_512&width=800",
+		imgurl:
+			"https://www.nanzhiy.cn/themes/Ethereal/assets/images/demo-avatar.png?image_process=resize,w_512&width=800",
 		tags: ["Astro"],
 		weight: 8,
 		enabled: true,
@@ -139,7 +157,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "versus0",
 		desc: "技术+算法blog。",
 		siteurl: "https://blog.542000.xyz",
-		imgurl:"https://img.542000.xyz/file/friend_avatar/1778931720838_f167cb95af9d881f4378b92b3e181d89_4647054993754934443.jpg",
+		imgurl:
+			"https://img.542000.xyz/file/friend_avatar/1778931720838_f167cb95af9d881f4378b92b3e181d89_4647054993754934443.jpg",
 		tags: ["Astro"],
 		weight: 8,
 		enabled: true,
@@ -211,7 +230,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "Sigrika-善良耙耙柑🍊",
 		desc: "记录我的二次元之旅",
 		siteurl: "https://qwq.sigrika.cc/",
-		imgurl:"https://weavatar.com/avatar/bc0dba25ea5949e8290d012e081ceec669aa7784c7ad765173473c80cbaee404",
+		imgurl:
+			"https://weavatar.com/avatar/bc0dba25ea5949e8290d012e081ceec669aa7784c7ad765173473c80cbaee404",
 		tags: ["Astro"],
 		weight: 0,
 		enabled: true,
@@ -274,7 +294,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "TT清沫uk",
 		desc: "Enjoy life",
 		siteurl: "https://ttquk.github.io",
-		imgurl: "https://ts1.tc.mm.bing.net/th/id/OIP-C.6WsD9caLSNQFhJOi77soRAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
+		imgurl:
+			"https://ts1.tc.mm.bing.net/th/id/OIP-C.6WsD9caLSNQFhJOi77soRAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
 		tags: ["Blog"],
 		weight: 0,
 		enabled: true,
@@ -292,7 +313,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "Fiee’s Blog",
 		desc: "长风破浪会有时，直挂云帆济沧海",
 		siteurl: "https://www.aifiee.cn",
-		imgurl: "https://aifiee-blog.oss-cn-beijing.aliyuncs.com/blog/images/1782719333889_1414.jpg",
+		imgurl:
+			"https://aifiee-blog.oss-cn-beijing.aliyuncs.com/blog/images/1782719333889_1414.jpg",
 		tags: ["Blog"],
 		weight: 0,
 		enabled: true,
@@ -328,7 +350,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "L!!!!ght",
 		desc: "阳光正好，慢慢前行。",
 		siteurl: "https://sunlight.kejk.cn",
-		imgurl: "https://easyimg.kejk.cn/i/4484873c-c2cc-4b3d-bc35-5c72ed01cfd9.webp",
+		imgurl:
+			"https://easyimg.kejk.cn/i/4484873c-c2cc-4b3d-bc35-5c72ed01cfd9.webp",
 		tags: ["Astro"],
 		weight: 0,
 		enabled: true,
@@ -346,7 +369,8 @@ export const friendsConfig: FriendLink[] = [
 		title: "奶昔的小窝",
 		desc: "死宅一枚",
 		siteurl: "https://naixv.netlify.app/",
-		imgurl: "https://p26-sign.douyinpic.com/tos-cn-i-0813c001/oUvA5DiftEBdowAAX2Agf4i1n9IH9YcANA9qSC~tplv-dy-shrink:640:567.webp?lk3s=138a59ce&x-expires=1785560400&x-signature=YpoicADrwq9L59vNzo%2FXuDXBhoQ%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=true&sh=640_567&sc=image&biz_tag=aweme_images&l=20260702135913037381C6C9813F40CA22",
+		imgurl:
+			"https://p26-sign.douyinpic.com/tos-cn-i-0813c001/oUvA5DiftEBdowAAX2Agf4i1n9IH9YcANA9qSC~tplv-dy-shrink:640:567.webp?lk3s=138a59ce&x-expires=1785560400&x-signature=YpoicADrwq9L59vNzo%2FXuDXBhoQ%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=true&sh=640_567&sc=image&biz_tag=aweme_images&l=20260702135913037381C6C9813F40CA22",
 		tags: ["Blog"],
 		weight: 0,
 		enabled: true,
@@ -369,7 +393,7 @@ export const friendsConfig: FriendLink[] = [
 		weight: 0,
 		enabled: true,
 	},
-		{
+	{
 		title: "RyuChan",
 		desc: "Ciallo～(∠・ω<)⌒★",
 		siteurl: "https://ryu-chan.vercel.app/",
@@ -398,13 +422,41 @@ export const friendsConfig: FriendLink[] = [
 	},
 ];
 
-// 获取启用的友链并进行排序
+// 历史 friendsConfig 数组保留为主题资料，不作为 Nocticur 的已审核友链。
+// 只有明确发布的管理快照可以进入静态页面，空数组必须保持空状态。
 export const getEnabledFriends = (): FriendLink[] => {
-	const friends = friendsConfig.filter((friend) => friend.enabled);
+	const published: ManagedFriend[] = managedFriends;
+	const friends = published
+		.filter((friend) => {
+			try {
+				const target = new URL(friend.url);
+				return (
+					target.protocol === "https:" && !target.username && !target.password
+				);
+			} catch {
+				return false;
+			}
+		})
+		.sort(
+			(a, b) =>
+				(a.group || "").localeCompare(b.group || "", "zh-CN") ||
+				(a.order ?? 0) - (b.order ?? 0) ||
+				a.id.localeCompare(b.id),
+		)
+		.map(
+			(friend): FriendLink => ({
+				title: friend.name,
+				desc: friend.description,
+				siteurl: friend.url,
+				imgurl: friend.avatar,
+				tags: friend.group ? [friend.group] : [],
+				weight: -(friend.order ?? 0),
+				enabled: true,
+			}),
+		);
 
 	if (friendsPageConfig.randomizeSort) {
 		return friends.sort(() => Math.random() - 0.5);
 	}
-
-	return friends.sort((a, b) => b.weight - a.weight);
+	return friends;
 };

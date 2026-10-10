@@ -569,7 +569,7 @@ const formatTimeAgo = (date: Date): string => {
 			gridContainer.style.cssText = `--image-count: ${count}; --image-rows: ${rows};`;
 
 			// 将图片移动到网格容器
-			images.slice(0, 9).forEach((img, idx) => {
+			images.slice(0, 9).forEach((img) => {
 				const item = document.createElement('div');
 				item.className = 'image-item';
 
@@ -614,19 +614,19 @@ const formatTimeAgo = (date: Date): string => {
 	}
 
 	// 初始化处理
-	document.querySelectorAll('.moment-card').forEach(processMarkdownImages);
+	document.querySelectorAll<HTMLElement>('.moment-card').forEach(processMarkdownImages);
 
 	// 监听动态加载的内容
 	document.addEventListener('moments:loaded', () => {
 		setTimeout(() => {
-			document.querySelectorAll('.moment-card').forEach(processMarkdownImages);
+			document.querySelectorAll<HTMLElement>('.moment-card').forEach(processMarkdownImages);
 		}, 100);
 	});
 
 	// Swup SPA 路由切换后重新处理图片网格
 	document.addEventListener('swup:content:replace', () => {
 		setTimeout(() => {
-			document.querySelectorAll('.moment-card').forEach(processMarkdownImages);
+			document.querySelectorAll<HTMLElement>('.moment-card').forEach(processMarkdownImages);
 		}, 50);
 	});
 </script>

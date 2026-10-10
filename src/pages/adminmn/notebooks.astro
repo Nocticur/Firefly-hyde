@@ -1,8 +1,11 @@
 ---
 // 笔记管理页面 - 往已有笔记本里写笔记，通过 GitHub Gist 存储
 import { externalNotebooksConfig } from "@/config/externalNotebooksConfig";
+
 // 从配置读取笔记本列表
 const notebookList = Object.keys(externalNotebooksConfig.notebookGists).sort();
+// 旧公开后台已退役。静态输出仅包含跳转，博客 Worker 对此路径返回 410。
+return Astro.redirect("/404/", 301);
 ---
 <html lang="zh-CN">
 <head>
@@ -359,7 +362,7 @@ const notebookList = Object.keys(externalNotebooksConfig.notebookGists).sort();
   <button class="dark-fab" onclick="toggleDark()" title="切换暗色模式">🌙</button>
   <div class="toast" id="toast"></div>
   <script is:inline
-    data-token={externalNotebooksConfig.githubToken || ""}
+    data-token=""
     data-gists={JSON.stringify(externalNotebooksConfig.notebookGists || {})}
     data-templates={JSON.stringify(externalNotebooksConfig.templates || [])}>
     var _script = document.currentScript;

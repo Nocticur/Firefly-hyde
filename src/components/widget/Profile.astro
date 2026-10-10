@@ -50,7 +50,7 @@ const className = Astro.props.class;
     >
     </div>
     <div class="text-center text-neutral-400 mb-2.5 transition">
-      {profileConfig.bio}
+      <span class="whitespace-pre-wrap">{profileConfig.bio}</span>
     </div>
         <div class="flex flex-wrap gap-2 justify-center mb-1">
             {profileConfig.links.length > 1 && profileConfig.links.map(item =>

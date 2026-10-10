@@ -41,6 +41,7 @@ const { class: className, style } = Astro.props;
 </div>
 
 <script is:inline>
+  (() => {
   const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   if (!window.timeGreetingImage) {
@@ -128,7 +129,10 @@ const { class: className, style } = Astro.props;
 
   updateTimeGreeting();
 
-  document.addEventListener("swup:contentReplaced", () => {
-    updateTimeGreeting();
-  });
+  if (window.timeGreetingContentReplacedHandler) {
+    document.removeEventListener("swup:contentReplaced", window.timeGreetingContentReplacedHandler);
+  }
+  window.timeGreetingContentReplacedHandler = updateTimeGreeting;
+  document.addEventListener("swup:contentReplaced", updateTimeGreeting);
+  })();
 </script>

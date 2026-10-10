@@ -36,6 +36,55 @@ type DynamicData = {
 	location: string;
 };
 
+type PlaceData = {
+	date: Date;
+	endDate?: Date;
+	province: string;
+	city: string;
+	district: string;
+	experience: string;
+	visitCount: number;
+	source: "manual" | "timeline";
+	timelineId?: string;
+	category?: string;
+	lat?: number;
+	lng?: number;
+	images: string[];
+	link?: string;
+};
+
+type MomentData = {
+	published: Date;
+	tags: string[];
+	location: string;
+	pinned: boolean;
+	images?: string | string[];
+	author: string;
+	avatar: string;
+	device: string;
+};
+
+type ResourceData =
+	| {
+			title: string;
+			content: string;
+			closable: boolean;
+			link?: {
+				enable: boolean;
+				text: string;
+				url: string;
+				external: boolean;
+			};
+			quotes?: undefined;
+	  }
+	| {
+			title: string;
+			quotes: { text: string; author: string }[];
+			content?: undefined;
+			closable?: undefined;
+			link?: undefined;
+	  };
+
 type ProjectLink = {
 	label: string;
 	icon: string;
@@ -107,7 +156,7 @@ const dynamicCollection: ContentCollection<DynamicData> = defineCollection({
 	}),
 });
 
-const placesCollection = defineCollection({
+const placesCollection: ContentCollection<PlaceData> = defineCollection({
 	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/places" }),
 	schema: z.object({
 		date: z.coerce.date(),
@@ -132,23 +181,21 @@ const placesCollection = defineCollection({
 	}),
 });
 
-const momentsCollection = defineCollection({
+const momentsCollection: ContentCollection<MomentData> = defineCollection({
 	loader: glob({ pattern: "**/*.md", base: "./src/content/moments" }),
 	schema: z.object({
 		published: z.coerce.date(),
 		tags: z.array(z.string()).optional().default([]),
 		location: z.string().optional().default(""),
 		pinned: z.boolean().optional().default(false),
-		images: z
-			.union([z.string(), z.array(z.string())])
-			.optional(),
+		images: z.union([z.string(), z.array(z.string())]).optional(),
 		author: z.string().optional().default(""),
 		avatar: z.string().optional().default(""),
 		device: z.string().optional().default(""),
 	}),
 });
 
-const ziyuanCollection = defineCollection({
+const ziyuanCollection: ContentCollection<ResourceData> = defineCollection({
 	loader: glob({ pattern: "**/*.md", base: "./src/content/ziyuan" }),
 	schema: z.union([
 		z.object({
@@ -171,7 +218,7 @@ const ziyuanCollection = defineCollection({
 				z.object({
 					text: z.string(),
 					author: z.string(),
-				})
+				}),
 			),
 			content: z.undefined().optional(),
 			closable: z.undefined().optional(),

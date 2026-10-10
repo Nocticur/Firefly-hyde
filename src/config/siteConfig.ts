@@ -1,4 +1,5 @@
 import type { SiteConfig } from "@/types/siteConfig";
+import { applyManagedSiteConfig } from "../utils/managed-config";
 import { resolvePageToggles } from "../utils/page-toggle-utils";
 import { resolveSiteLang } from "../utils/site-config-utils";
 
@@ -54,21 +55,20 @@ const pages = resolvePageToggles({
 
 export const siteConfig: SiteConfig = {
 	// 站点标题
-	title: "Hyde Blog",
+	title: "Nocticur的博客",
 
 	// 站点副标题
-	subtitle: "人心中的成见是一座大山",
+	subtitle: "Nocticur",
 
 	// 站点 URL
-	site_url: "https://seasir.top",
+	site_url: "https://blog.mourn.top/",
 
 	// 站点描述
-	description:
-		"Hyde 是一个记录折腾博客搭建教程、分享教程、随笔感悟，技术探索与生活记录，都在这里。",
+	description: "Nocticur的博客，记录个人学习、工作、AI相关的内容",
 
 	// 站点关键词
 	keywords: [
-		"Hyde",
+		"Nocticur",
 		"个人博客主题",
 		"Astro",
 		"ACGN",
@@ -117,7 +117,7 @@ export const siteConfig: SiteConfig = {
 	favicon: [
 		{
 			// 图标文件路径
-			src: "/favicon/favicon.ico",
+			src: "/assets/images/logo-nocticur.png",
 			// 可选，指定主题 'light' | 'dark'
 			// theme: "light",
 			// 可选，图标大小
@@ -138,12 +138,11 @@ export const siteConfig: SiteConfig = {
 		// 使用 Astro 图标库时不需要设置 valueDark，图标会自动跟随主题亮暗色切换
 		logo: {
 			type: "image",
-			value: "assets/images/logo.webp",
-			valueDark: "assets/images/logo/firefly-dark.png",
-			alt: "🍀",
+			value: "/assets/images/logo-nocticur.png",
+			alt: "Nocticur",
 		},
 		// 导航栏标题
-		title: "Hyde",
+		title: "Nocticur",
 		// 全宽导航栏，导航栏是否占满屏幕宽度
 		widthFull: true,
 		// 导航菜单对齐方式，left：左对齐，center：居中
@@ -158,7 +157,7 @@ export const siteConfig: SiteConfig = {
 	},
 
 	// 站点开始日期，用于统计运行天数
-	siteStartDate: "2026-04-27",
+	siteStartDate: "2026-07-26",
 
 	// 站点时区（IANA 时区字符串），用于格式化bangumi、rss里的构建日期时间等等..
 	// 示例："Asia/Shanghai", "UTC", 如果为空，则按照构建服务器的时区进行时区转换
@@ -170,9 +169,9 @@ export const siteConfig: SiteConfig = {
 	// 足迹地图配置（高德地图）
 	placesMap: {
 		// 高德 Web 端 JS API Key
-		amapKey: "599f1507ae283cc3d8fe300a2327b876",
+		amapKey: "",
 		// 高德安全密钥
-		amapSecurityJsCode: "a128a9062568528700bbd3a8cc574a37",
+		amapSecurityJsCode: "",
 		// 站点主人位置（地图初始中心和标记点）
 		ownerLocation: {
 			lng: 113.321276,
@@ -312,13 +311,13 @@ export const siteConfig: SiteConfig = {
 	// ── Bilibili配置 ──────────────────────────────────
 	bilibili: {
 		// 你的 Bilibili 用户 UID
-		uid: "38932988",
+		uid: "645892937",
 	},
 
 	// ── 番组计划bangumi配置 ──────────────────────────────────
 	bangumi: {
 		// Bangumi用户ID
-		userId: "1143164",
+		userId: "",
 		// 数据模式：static=构建时获取，dynamic=客户端实时获取
 		// static 模式在构建时获取数据并静态渲染，部署后数据不更新
 		// dynamic 模式在浏览器中实时请求 API，始终显示最新数据
@@ -342,7 +341,7 @@ export const siteConfig: SiteConfig = {
 	// ── VNDB配置 ──────────────────────────────────
 	vndb: {
 		// VNDB 用户 ID
-		userId: "u358128",
+		userId: "",
 		// 数据模式：static=构建时获取，dynamic=客户端实时获取
 		// static 模式在构建时获取数据并静态渲染，部署后数据不更新
 		// dynamic 模式在浏览器中实时请求 API，始终显示最新数据
@@ -362,9 +361,9 @@ export const siteConfig: SiteConfig = {
 	// ── MyAnimeList配置 ──────────────────────────────────
 	mal: {
 		// MyAnimeList 用户名（列表需为公开状态，私密列表无法读取）
-		username: "cuteleaf",
+		username: "",
 		// MyAnimeList Client ID，在 https://myanimelist.net/apiconfig 注册免费应用后获取
-		clientId: "	0ef34371450f9c6c809deaadec6aa8f3",
+		clientId: "",
 		// MAL API 地址
 		apiUrl: "https://api.myanimelist.net/v2",
 		// 动画条目详情页地址，末尾需要带 /
@@ -423,3 +422,5 @@ export const siteConfig: SiteConfig = {
 	// 站点语言，在本配置文件顶部SITE_LANG定义
 	lang: SITE_LANG,
 };
+
+applyManagedSiteConfig(siteConfig, true);

@@ -8,7 +8,12 @@ const MARKER = "data-ext-inserted";
 
 // ========== 配置获取函数 ==========
 
-function getConfig() {
+function getConfig(): {
+	gistId: string;
+	fileName: string;
+	defaultAuthor: string;
+	defaultAvatar: string;
+} | null {
 	const configScript = document.getElementById("moments-config");
 	if (!configScript) {
 		console.warn("[外部说说] 未找到配置脚本 #moments-config");
@@ -487,7 +492,7 @@ function fetchPinned(): void {
 // ========== 初始化 ==========
 
 // 确保 DOM 加载完成后再执行
-function initMoments() {
+function initMoments(): void {
 	if (document.getElementById("moments-feed")) {
 		fetchMoments();
 	}

@@ -4,6 +4,7 @@ import {
 	type NavBarSearchConfig,
 	NavBarSearchMethod,
 } from "../types/navBarConfig";
+import { applyManagedNavigation } from "../utils/managed-config";
 
 // ============================================================================
 // 导航栏配置 - 根据顺序动态生成导航栏链接
@@ -56,8 +57,8 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		url: "#",
 		icon: "material-symbols:bolt-outline",
 		children: [
-			// 朋友圈 
-			LinkPresets.Moments, 
+			// 朋友圈
+			LinkPresets.Moments,
 
 			// 动态
 			LinkPresets.Dynamic,
@@ -129,8 +130,7 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			{
 				name: "统计",
-				url: "https://umami.seasir.top/share/cp5SqrNUOxbulLZt/seasir.top",
-				external: true,
+				url: "/archive/",
 				icon: "fa7-solid:chart-simple",
 			},
 		],
@@ -145,21 +145,21 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		children: [
 			{
 				name: "GitHub",
-				url: "https://github.com/Seasir-Hyde/Firefly-hyde",
+				url: "https://github.com/Nocticur",
 				external: true,
 				icon: "fa7-brands:github",
 			},
 			{
-				name: "Gitee",
-				url: "https://gitee.com/SeasirHyde",
+				name: "B站",
+				url: "https://space.bilibili.com/645892937",
 				external: true,
-				icon: "fa7-brands:gitee",
+				icon: "fa7-brands:bilibili",
 			},
 			{
-				name: "CNB",
-				url: "https://cnb.cool/W3C/Hyde/Firefly-hyde",
+				name: "QQ群",
+				url: "https://qm.qq.com/q/2R07cjGTZ0",
 				external: true,
-				icon: "tdesign:logo-cnb-filled",
+				icon: "fa7-brands:qq",
 			},
 			// {
 			// 	name: "QQ交流群",
@@ -350,3 +350,5 @@ export const LinkPresets: Record<string, NavBarLink> = {
 };
 
 export const navBarConfig: NavBarConfig = getDynamicNavBarConfig();
+
+applyManagedNavigation(navBarConfig);

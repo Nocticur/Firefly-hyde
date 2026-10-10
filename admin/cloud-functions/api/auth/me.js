@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * GET /api/auth/me（Cloud Functions，Node.js 20）
  *
@@ -12,6 +13,7 @@ import { requireAuth } from "../../_shared/requireAuth.js";
 import { jsonResponse, methodNotAllowed } from "../../_shared/response.js";
 
 export async function onRequestGet(context) {
+	return legacyServiceDisabled();
 	const auth = await requireAuth(context);
 	if (auth instanceof Response) return auth;
 
@@ -23,6 +25,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	if (context.request.method !== "GET") {
 		return methodNotAllowed(["GET"]);
 	}

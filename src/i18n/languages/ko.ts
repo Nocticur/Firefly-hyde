@@ -92,7 +92,6 @@ export const ko: Translation = {
 	[Key.booknavEmpty]: "북마크가 없습니다.",
 
 	// 프로젝트 쇼케이스
-	[Key.projects]: "프로젝트",
 	[Key.projectsDescription]: "제가 개발한 프로젝트입니다",
 	[Key.projectDetails]: "자세히 보기",
 	[Key.projectBack]: "프로젝트 목록으로 돌아가기",

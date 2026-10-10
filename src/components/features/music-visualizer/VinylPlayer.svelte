@@ -1,43 +1,43 @@
 <script lang="ts">
-  interface Props {
-    coverUrl: string;
-    trackName: string;
-    artist: string;
-    isPlaying: boolean;
-  }
+interface Props {
+	coverUrl: string;
+	trackName: string;
+	artist: string;
+	isPlaying: boolean;
+}
 
-  let { coverUrl, trackName, artist, isPlaying }: Props = $props();
+let { coverUrl, trackName, artist, isPlaying }: Props = $props();
 
-  let transitioning = $state(false);
-  let displayCover = $state("");
-  let displayName = $state("");
-  let displayArtist = $state("");
-  let prevCover = $state("");
-  let trackNameEl = $state<HTMLDivElement | null>(null);
-  let nameNeedsScroll = $state(false);
+let transitioning = $state(false);
+let displayCover = $state("");
+let displayName = $state("");
+let displayArtist = $state("");
+let prevCover = $state("");
+let trackNameEl = $state<HTMLDivElement | null>(null);
+let nameNeedsScroll = $state(false);
 
-  $effect(() => {
-    if (trackNameEl) {
-      nameNeedsScroll = trackNameEl.scrollWidth > trackNameEl.clientWidth;
-    }
-  });
+$effect(() => {
+	if (trackNameEl) {
+		nameNeedsScroll = trackNameEl.scrollWidth > trackNameEl.clientWidth;
+	}
+});
 
-  $effect(() => {
-    if (coverUrl !== prevCover && prevCover !== "") {
-      transitioning = true;
-      setTimeout(() => {
-        transitioning = false;
-        displayCover = coverUrl;
-        displayName = trackName;
-        displayArtist = artist;
-      }, 450);
-      return;
-    }
-    prevCover = coverUrl;
-    displayCover = coverUrl;
-    displayName = trackName;
-    displayArtist = artist;
-  });
+$effect(() => {
+	if (coverUrl !== prevCover && prevCover !== "") {
+		transitioning = true;
+		setTimeout(() => {
+			transitioning = false;
+			displayCover = coverUrl;
+			displayName = trackName;
+			displayArtist = artist;
+		}, 450);
+		return;
+	}
+	prevCover = coverUrl;
+	displayCover = coverUrl;
+	displayName = trackName;
+	displayArtist = artist;
+});
 </script>
 
 <div class="vinyl-player">

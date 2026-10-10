@@ -1,3 +1,4 @@
+import { legacyServiceDisabled } from "../../_shared/retired.js";
 /**
  * GET / PUT /api/spec/<name>
  * 整文件文本页读写通道（Cloud Functions，Node.js 20）：关于 / 留言板 / 页脚 HTML。
@@ -100,6 +101,7 @@ async function handlePut(context) {
 }
 
 export async function onRequest(context) {
+	return legacyServiceDisabled();
 	const method = context.request.method;
 	if (method === "GET") return handleGet(context);
 	if (method === "PUT") return handlePut(context);

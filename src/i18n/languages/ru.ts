@@ -93,7 +93,6 @@ export const ru: Translation = {
 	[Key.booknavEmpty]: "Закладок пока нет.",
 
 	// Витрина проектов
-	[Key.projects]: "Проекты",
 	[Key.projectsDescription]: "Мои разработанные проекты",
 	[Key.projectDetails]: "Подробнее",
 	[Key.projectBack]: "К списку проектов",

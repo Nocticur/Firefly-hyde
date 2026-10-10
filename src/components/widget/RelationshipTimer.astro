@@ -3,6 +3,7 @@ import WidgetLayout from "@/components/common/WidgetLayout.astro";
 import { relationshipConfig } from "@/config/relationshipConfig";
 
 const config = relationshipConfig;
+const configured = Boolean(config.startDate && config.name1 && config.name2);
 
 interface Props {
 	class?: string;
@@ -18,7 +19,7 @@ const style = Astro.props.style;
   class={className}
   style={style}
 >
-  <div class="flex flex-col items-center p-2">
+  {configured ? <div class="flex flex-col items-center p-2">
     <!-- 顶部名称栏 -->
     <div class="flex items-center justify-center gap-2 mb-4 text-sm font-medium text-neutral-600 dark:text-neutral-400">
       <span>{config.name1}</span>
@@ -48,7 +49,7 @@ const style = Astro.props.style;
       <span class="timer-num" data-timer-minutes>0</span><span class="timer-unit bg-blue-500">分</span>
       <span class="timer-num" data-timer-seconds>00</span><span class="timer-unit bg-purple-400">秒</span>
     </div>
-  </div>
+  </div> : <p class="p-4 text-center text-sm text-(--content-meta)">暂未配置纪念日。</p>}
 </WidgetLayout>
 
 <style>
@@ -65,6 +66,7 @@ const style = Astro.props.style;
 
 <script is:inline define:vars={{ startDateStr: config.startDate }}>
   function updateRelationshipTimer() {
+    if (!startDateStr) return;
     const startDate = new Date(startDateStr);
     const now = new Date();
     
@@ -120,11 +122,13 @@ const style = Astro.props.style;
   }
 
   // 立即运行并每秒更新
-  updateRelationshipTimer();
-  if (!window.relationshipTimerInterval) {
-    window.relationshipTimerInterval = setInterval(updateRelationshipTimer, 1000);
-  }
+  if (startDateStr) {
+    updateRelationshipTimer();
+    if (!window.relationshipTimerInterval) {
+      window.relationshipTimerInterval = setInterval(updateRelationshipTimer, 1000);
+    }
 
-  // 监听 Swup 页面切换
-  document.addEventListener('swup:content:replace', updateRelationshipTimer);
+    // 监听 Swup 页面切换
+    document.addEventListener('swup:content:replace', updateRelationshipTimer);
+  }
 </script>

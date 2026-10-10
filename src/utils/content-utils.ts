@@ -2,6 +2,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl, getPostUrlBySlug } from "@utils/url-utils";
+import { externalMomentsConfig } from "@/config/externalMomentsConfig";
 import { siteConfig } from "@/config/siteConfig";
 import type { UserSubjectCollection } from "@/types/bangumi";
 
@@ -171,7 +172,9 @@ export async function getTagList(): Promise<Tag[]> {
 	});
 
 	// 从 moments collection 获取标签
-	const momentsCollection = await getCollection("moments");
+	const momentsCollection = externalMomentsConfig.localContentEnabled
+		? await getCollection("moments")
+		: [];
 	momentsCollection.forEach((moment) => {
 		moment.data.tags?.forEach((tag: string) => {
 			if (!countMap[tag]) countMap[tag] = 0;
@@ -308,7 +311,9 @@ export async function getArchiveList(): Promise<ArchiveItem[]> {
 	}));
 
 	// 从 moments collection 读取数据
-	const momentsCollection = await getCollection("moments");
+	const momentsCollection = externalMomentsConfig.localContentEnabled
+		? await getCollection("moments")
+		: [];
 	const momentsFromCollection: ArchiveItem[] = momentsCollection.map(
 		(moment) => {
 			let title = moment.id || "";

@@ -212,7 +212,10 @@ onMount(() => {
 	window.addEventListener("fm:time", onTime as EventListener);
 	window.addEventListener("fm:volume", onVolume as EventListener);
 	window.addEventListener("fm:mode", onMode as EventListener);
-	window.addEventListener("fm:playlist-changed", onPlaylistChanged as EventListener);
+	window.addEventListener(
+		"fm:playlist-changed",
+		onPlaylistChanged as EventListener,
+	);
 });
 
 onDestroy(() => {
@@ -222,7 +225,10 @@ onDestroy(() => {
 	window.removeEventListener("fm:time", onTime as EventListener);
 	window.removeEventListener("fm:volume", onVolume as EventListener);
 	window.removeEventListener("fm:mode", onMode as EventListener);
-	window.removeEventListener("fm:playlist-changed", onPlaylistChanged as EventListener);
+	window.removeEventListener(
+		"fm:playlist-changed",
+		onPlaylistChanged as EventListener,
+	);
 });
 </script>
 

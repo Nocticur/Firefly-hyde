@@ -11,9 +11,9 @@ import {
 	applyPostCoverImageEnabledToDocument,
 	getDefaultBannerCarouselEnabled,
 	getDefaultBannerTitleEnabled,
-	getDefaultFullscreenCarouselEnabled,
 	getDefaultCardBorderEnabled,
 	getDefaultCardFollowThemeEnabled,
+	getDefaultFullscreenCarouselEnabled,
 	getDefaultFullscreenLayout,
 	getDefaultGradientEnabled,
 	getDefaultHue,
@@ -26,9 +26,9 @@ import {
 	getHue,
 	getStoredBannerCarouselEnabled,
 	getStoredBannerTitleEnabled,
-	getStoredFullscreenCarouselEnabled,
 	getStoredCardBorderEnabled,
 	getStoredCardFollowThemeEnabled,
+	getStoredFullscreenCarouselEnabled,
 	getStoredFullscreenLayout,
 	getStoredGradientEnabled,
 	getStoredOverlayBlur,
@@ -40,9 +40,9 @@ import {
 	getStoredWavesEnabled,
 	setBannerCarouselEnabled,
 	setBannerTitleEnabled,
-	setFullscreenCarouselEnabled,
 	setCardBorderEnabled,
 	setCardFollowThemeEnabled,
+	setFullscreenCarouselEnabled,
 	setFullscreenLayout,
 	setGradientEnabled,
 	setHue,
@@ -143,7 +143,8 @@ const isBannerTitleEnabled =
 	backgroundWallpaper.common?.homeText?.enable ?? false;
 const isBannerTitleSwitchable =
 	isBannerTitleEnabled && displaySettingsConfig.bannerTitleSwitchable;
-const isBannerCarouselSwitchable = displaySettingsConfig.bannerCarouselSwitchable;
+const isBannerCarouselSwitchable =
+	displaySettingsConfig.bannerCarouselSwitchable;
 // 是否允许用户切换全屏轮播
 const isFullscreenCarouselSwitchable =
 	backgroundWallpaper.fullscreen?.carousel?.switchable ?? false;
@@ -214,13 +215,13 @@ let cardSettingsIsDefault = $derived(
 
 const hasAnyContent = $derived(
 	showThemeColor ||
-	isWallpaperSwitchable ||
-	allowLayoutSwitch ||
-	isPostCoverImageSwitchable ||
-	hasBannerSettings ||
-	hasOverlaySettings ||
-	isSakuraSwitchable||
-	isFullscreenLayoutSwitchable,
+		isWallpaperSwitchable ||
+		allowLayoutSwitch ||
+		isPostCoverImageSwitchable ||
+		hasBannerSettings ||
+		hasOverlaySettings ||
+		isSakuraSwitchable ||
+		isFullscreenLayoutSwitchable,
 );
 
 // --- Tab visibility ---

@@ -64,6 +64,7 @@ export class GitOpError extends Error {
  * @returns {Promise<{ commitOid: string, branch: string }>}
  */
 export async function commitAndPush(env, commitMessage, mutate) {
+	throw new GitOpError(410, "旧写入通道已退役，请使用独立管理服务");
 	const cfg = resolveConfig(env);
 	const dir = await mkdtemp(join(tmpdir(), "firefly-admin-"));
 	const url = `${CNB_HOST}/${cfg.repo}.git`;
