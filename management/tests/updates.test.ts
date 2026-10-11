@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { checkUpdates, themeUpstream } from "../src/updates.ts";
+import managementPackage from "../package.json";
+import { inc } from "semver";
 import type { Services } from "../src/types.ts";
 
 function fixture(options: {
@@ -25,7 +27,7 @@ function fixture(options: {
 			if (url.pathname.includes("/branches/")) return Response.json({ commit: { sha: theme ? themeSha : managementSha } });
 			if (url.pathname.includes("/contents/")) {
 				assert.equal(url.searchParams.get("ref"), theme ? themeSha : managementSha, "manifest must use the observed immutable SHA");
-				const version = theme ? options.themeVersion ?? "6.16.8" : options.managementVersion ?? "1.0.1";
+				const version = theme ? options.themeVersion ?? "6.16.8" : options.managementVersion ?? managementPackage.version;
 				return Response.json({ encoding: "base64", content: Buffer.from(JSON.stringify({ version })).toString("base64") });
 			}
 			if (url.pathname.includes("/compare/")) {
@@ -40,7 +42,8 @@ function fixture(options: {
 }
 
 test("upstream checks detect new theme commits without a release or version bump and newer management versions", async () => {
-	const f = fixture({ managementVersion: "1.0.2" });
+	const latest=inc(managementPackage.version,"patch")!;
+	const f = fixture({ managementVersion: latest });
 	const result = await checkUpdates(f.services);
 	assert.equal(result.automaticUpgrade, false);
 	assert.equal(result.complete, true);
@@ -48,8 +51,8 @@ test("upstream checks detect new theme commits without a release or version bump
 	assert.equal(result.components[0].status, "update-available");
 	assert.equal(result.components[0].versionStatus, "up-to-date");
 	assert.equal(result.components[0].commitsAhead, 4);
-	assert.equal(result.components[1].currentVersion, "1.0.1");
-	assert.equal(result.components[1].latestVersion, "1.0.2");
+	assert.equal(result.components[1].currentVersion, managementPackage.version);
+	assert.equal(result.components[1].latestVersion, latest);
 	assert.equal(result.components[1].status, "update-available");
 	assert.equal(f.requests.length, 5);
 	assert(!f.requests.some((url) => url.includes("/releases/")));
@@ -63,9 +66,9 @@ test("identical theme ancestry and equal management versions are explicitly curr
 });
 
 test("semantic versions compare numerically and preserve prerelease ordering", async () => {
-	let result = await checkUpdates(fixture({ managementVersion: "1.0.10-rc.1" }).services);
+	let result = await checkUpdates(fixture({ managementVersion: `${inc(managementPackage.version,"minor")}-rc.1` }).services);
 	assert.equal(result.components[1].status, "update-available");
-	result = await checkUpdates(fixture({ managementVersion: "1.0.1-rc.1" }).services);
+	result = await checkUpdates(fixture({ managementVersion: `${managementPackage.version}-rc.1` }).services);
 	assert.equal(result.components[1].status, "ahead");
 });
 

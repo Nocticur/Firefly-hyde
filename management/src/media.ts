@@ -237,3 +237,13 @@ export function registerMedia(app: Hono<AppEnv>): void {
     return new Response(object.body, { headers: { "Content-Type": record.value.contentType, "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(record.value.filename)}`, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox" } });
   });
 }
+
+export function registerPublicMedia(app: Hono<AppEnv>): void {
+  app.get("/api/public/media/*",async c=>{
+    const key=c.req.path.slice("/api/public/media/".length);
+    if(!/^published\/[a-f0-9]{64}\.[a-z0-9]+$/.test(key))throw new ApiError(404,"MEDIA_NOT_FOUND","Image not found");
+    const object=await getPublicObject(c.get("services"),key);
+    if(!object)throw new ApiError(404,"MEDIA_NOT_FOUND","Image not found");
+    return new Response(object.body,{headers:{"Content-Type":object.contentType ?? "application/octet-stream","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});
+  });
+}

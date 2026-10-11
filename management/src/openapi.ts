@@ -1,6 +1,12 @@
 const response={"200":{description:"JSON result",content:{"application/json":{schema:{type:"object"}}}},"400":{description:"Validation error"},"401":{description:"Authentication required"},"403":{description:"Origin, CSRF or authorization failed"},"409":{description:"Optimistic version conflict; error.details.current contains the latest record"},"503":{description:"Persistent service or credential binding is missing"}};
 const entries:Array<[string,string[],boolean,string]>=[
- ["/api/me",["get"],true,"Current numeric GitHub identity and CSRF token"],
+ ["/api/me",["get"],true,"Current administrator identity and CSRF token"],
+ ["/api/auth/password",["post"],false,"Same-origin password login, persistent attempt limits and secure session cookie"],
+ ["/api/public/media/{key}",["get"],false,"Explicitly published immutable media; private objects remain protected"],
+ ["/api/maintenance/initialize",["post"],true,"Idempotently initialize the bundled Nocticur baseline"],
+ ["/api/maintenance/reconcile",["post"],true,"Resume durable maintenance tasks without a Queue"],
+ ["/api/maintenance/backups/{id}/download",["get"],true,"Download a verified private JSON backup"],
+ ["/api/maintenance/backups/{id}",["delete"],true,"Delete an unused backup with version and CSRF checks"],
  ["/api/dashboard",["get"],true,"Private dashboard counts and production state"],
  ["/api/auth/github",["get"],false,"Start GitHub OAuth at the fixed administration origin"],
  ["/api/auth/github/callback",["get"],false,"One-use OAuth state and numeric administrator binding"],

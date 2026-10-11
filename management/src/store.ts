@@ -1,11 +1,13 @@
 import { ApiError } from "./errors.ts";
 import type { Database, SqlStatement, Stored } from "./types.ts";
+import { FREE_OBJECT_SCHEMA } from "./free-storage.ts";
 
 export type Change = { kind: string; id: string; expectedVersion: number | null; value?: unknown; remove?: boolean; checkOnly?: boolean };
 export const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, version INTEGER NOT NULL CHECK(version > 0), value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind,id))",
   "CREATE INDEX IF NOT EXISTS records_kind_updated ON records(kind,updated_at)",
   "CREATE TABLE IF NOT EXISTS transaction_assertions (id TEXT PRIMARY KEY, ok INTEGER NOT NULL CHECK(ok = 1))",
+  FREE_OBJECT_SCHEMA,
 ];
 export class RecordStore {
   constructor(public db: Database, public clock: () => number = Date.now) {}

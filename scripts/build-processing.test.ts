@@ -105,6 +105,6 @@ test("deployment rejects dirty, stale and shortened release SHAs", () => {
 			withAdmin: true,
 			dryRun: true,
 		}),
-		["deploy", "--env", "production", "--tag", sha, "--dry-run"],
+		["deploy", "--env", "", "--tag", sha, "--dry-run"],
 	);
 });

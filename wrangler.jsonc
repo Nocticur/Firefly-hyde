@@ -1,8 +1,10 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "firefly-hyde",
-	"main": "workers/blog.js",
+	"main": "workers/site.js",
 	"compatibility_date": "2026-07-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"preview_urls": false,
 	"version_metadata": { "binding": "VERSION" },
 	"assets": {
 		"directory": "./dist",
@@ -10,19 +12,30 @@
 		"run_worker_first": true,
 		"not_found_handling": "404-page"
 	},
-	// The existing blog can deploy before the separate administration Worker exists.
-	// Public interaction routes return 503 until the production binding is enabled.
+	// The blog and /admin/ share this Worker. Missing DB/secrets fail closed in the API.
 	"services": [],
-	"env": {
-		"production": {
-			"name": "firefly-hyde",
-			"version_metadata": { "binding": "VERSION" },
-			"services": [
-				{
-					"binding": "ADMIN",
-					"service": "nocticur-firefly-hyde-admin"
-				}
-			]
-		}
-	}
+	"vars": {
+		"PLATFORM": "cloudflare",
+		"ENVIRONMENT": "production",
+		"ADMIN_ORIGIN": "https://blog.mourn.top",
+		"ADMIN_PATH": "/admin/",
+		"AUTH_MODE": "password",
+		"FREE_PLAN": "1",
+		"MAIL_MODE": "disabled",
+		"BLOG_ORIGIN": "https://blog.mourn.top",
+		"MEDIA_ORIGIN": "https://blog.mourn.top/api/public/media/",
+		"ADMIN_GITHUB_USER_ID": "285582250",
+		"GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
+		"GITHUB_BRANCH": "main",
+		"BLOG_WORKER_NAME": "firefly-hyde",
+		"GITHUB_BUILD_CHECK_NAME": "Workers Builds: firefly-hyde",
+		"GITHUB_BUILD_CHECK_APP_ID": "85455",
+		"BACKUP_PREFIX": "backups/"
+	},
+	// Add only actual production resource bindings after they are created.
+	// DB: D1, migrations_dir = management/migrations; PRIVATE_MEDIA/PUBLIC_MEDIA: R2.
+	// TASKS: Queue; enable production Cron/consumers after configuration and validation.
+	"d1_databases": [],
+	"r2_buckets": [],
+	"triggers": { "crons": [] }
 }

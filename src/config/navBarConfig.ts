@@ -110,6 +110,7 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			// 关于页面
 			LinkPresets.About,
+			LinkPresets.Admin,
 		],
 	});
 
@@ -326,7 +327,7 @@ export const LinkPresets: Record<string, NavBarLink> = {
 		icon: "mdi:wechat",
 	},
 	Admin: {
-		name: "登录",
+		name: "后台管理",
 		url: "/admin/",
 		icon: "material-symbols:lock",
 	},

@@ -6,7 +6,7 @@ import { authenticate,registerAuth } from "./auth.ts";
 import { registerArticles } from "./content.ts";
 import { registerSettings } from "./settings.ts";
 import { registerInteractions,registerPublicInteractions } from "./interactions.ts";
-import { registerMedia } from "./media.ts";
+import { registerMedia,registerPublicMedia } from "./media.ts";
 import { registerPublishing } from "./publishing.ts";
 import { registerMaintenance,runMaintenance } from "./maintenance.ts";
 import { createServices,productionRequirements } from "./runtime.ts";
@@ -35,7 +35,7 @@ export function createApp(services?:Services){
   });
   app.get("/api/health",c=>{const svc=c.get("services"),missing=productionRequirements(svc.env);return c.json({ok:svc.env.ENVIRONMENT==="development"||missing.length===0,environment:svc.env.ENVIRONMENT,productionReady:svc.env.ENVIRONMENT==="production"&&missing.length===0,missing},svc.env.ENVIRONMENT==="production"&&missing.length?503:200);});
   app.get("/api/openapi.json",c=>c.json(openApiDocument));
-  registerAuth(app);registerPublicInteractions(app);
+  registerAuth(app);registerPublicInteractions(app);registerPublicMedia(app);
   app.use("/api/*",async(c,next)=>{
     if(c.req.path.startsWith("/api/public/") || c.req.path.startsWith("/api/auth/") || ["/api/health","/api/me","/api/openapi.json"].includes(c.req.path))return next();
     return authenticate(c,next);

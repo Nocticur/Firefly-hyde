@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import managementPackage from "../package.json";
 import { test } from "node:test";
 import { mkdtemp,rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -82,7 +83,7 @@ test("encoded traversal slugs cannot create, edit or restore articles and do not
 
 test("an incomplete update check records its partial evidence and remains retryable",async()=>{
   const f=await fixture();try{
-    f.services.fetcher=async(input)=>{const path=new URL(String(input)).pathname;if(path.includes("Seasir-Hyde"))return new Response("private provider response",{status:429});if(path.includes("/branches/"))return Response.json({commit:{sha:"a".repeat(40)}});return Response.json({encoding:"base64",content:Buffer.from(JSON.stringify({version:"1.0.1"})).toString("base64")});};
+    f.services.fetcher=async(input)=>{const path=new URL(String(input)).pathname;if(path.includes("Seasir-Hyde"))return new Response("private provider response",{status:429});if(path.includes("/branches/"))return Response.json({commit:{sha:"a".repeat(40)}});return Response.json({encoding:"base64",content:Buffer.from(JSON.stringify({version:managementPackage.version})).toString("base64")});};
     const response=await f.request("/api/maintenance/tasks","POST",{type:"check-updates"}),task=await response.json();assert.equal(response.status,202);
     await runMaintenance(f.services);
     const row=await f.store.get<any>("task",task.id);assert.equal(row?.value.status,"failed");assert.equal(row?.value.payload.result.complete,false);assert.equal(row?.value.payload.result.components[0].status,"unavailable");assert.equal(row?.value.payload.result.components[1].status,"up-to-date");assert(!JSON.stringify(row?.value).includes("private provider response"));

@@ -22,7 +22,8 @@ const utf8 = new TextEncoder();
 export function assertPublishingConfiguration(services: Services) {
 	const env = services.env;
 	if (env.ENVIRONMENT !== "production") throw new ApiError(403, "PRODUCTION_REQUIRED", "Preview and development environments cannot publish production content");
-	for (const key of ["GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY", "GITHUB_REPOSITORY", "BLOG_ORIGIN"] as const) required(env[key], key);
+	for (const key of ["GITHUB_REPOSITORY", "BLOG_ORIGIN"] as const) required(env[key], key);
+	if(!env.GITHUB_PUBLISH_TOKEN)for(const key of ["GITHUB_APP_ID","GITHUB_APP_INSTALLATION_ID","GITHUB_APP_PRIVATE_KEY"] as const)required(env[key],key);
 	if (!/^[\w.-]+\/[\w.-]+$/.test(String(env.GITHUB_REPOSITORY))) throw new ApiError(503, "INVALID_REPOSITORY", "GITHUB_REPOSITORY must be owner/repository");
 	if (env.PLATFORM !== "cloudflare") throw new ApiError(503, "PLATFORM_REQUIRED", "Configure the production Cloudflare platform");
 	for (const key of ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN", "BLOG_WORKER_NAME"] as const) required(env[key], key);
@@ -102,15 +103,19 @@ async function requestJson(services: Services, url: string, init: RequestInit = 
 }
 
 export async function githubClient(services: Services) {
-	const jwt = await githubJwt(services);
-	const installation = encode(String(required(services.env.GITHUB_APP_INSTALLATION_ID, "GITHUB_APP_INSTALLATION_ID")));
-	const headers = { Authorization: `Bearer ${jwt}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "Nocticur-Publishing", "Content-Type": "application/json" };
-	const access = await requestJson(services, `https://api.github.com/app/installations/${installation}/access_tokens`, { method: "POST", headers, body: JSON.stringify({ repositories: [String(services.env.GITHUB_REPOSITORY).split("/")[1]], permissions: { contents: "write", checks:"read" } }) });
-	if (typeof access.token !== "string") throw new ApiError(502, "APP_TOKEN_INVALID", "GitHub did not issue an installation token");
+	const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "Nocticur-Publishing", "Content-Type": "application/json" };
+	let token=services.env.GITHUB_PUBLISH_TOKEN;
+	if(!token){
+		const jwt = await githubJwt(services);
+		const installation = encode(String(required(services.env.GITHUB_APP_INSTALLATION_ID, "GITHUB_APP_INSTALLATION_ID")));
+		const access = await requestJson(services, `https://api.github.com/app/installations/${installation}/access_tokens`, { method: "POST", headers: {...headers,Authorization:`Bearer ${jwt}`}, body: JSON.stringify({ repositories: [String(services.env.GITHUB_REPOSITORY).split("/")[1]], permissions: { contents: "write", checks:"read" } }) });
+		if (typeof access.token !== "string") throw new ApiError(502, "APP_TOKEN_INVALID", "GitHub did not issue an installation token");
+		token=access.token;
+	}
 	const repository = String(required(services.env.GITHUB_REPOSITORY, "GITHUB_REPOSITORY"));
 	const branch = String(services.env.GITHUB_BRANCH ?? "main");
 	const root = `https://api.github.com/repos/${repository.split("/").map(encode).join("/")}`;
-	const api = (path: string, init: RequestInit = {}) => requestJson(services, `${root}${path}`, { ...init, headers: { ...headers, Authorization: `Bearer ${access.token}`, ...init.headers } });
+	const api = (path: string, init: RequestInit = {}) => requestJson(services, `${root}${path}`, { ...init, headers: { ...headers, Authorization: `Bearer ${token}`, ...init.headers } });
 	const trees = new Map<string, Promise<any>>();
 	const treeAt = (commitSha: string) => {
 		let pending = trees.get(commitSha);
@@ -224,6 +229,9 @@ export async function verifyProduction(services: Services, targetSha: string, co
 
 export async function dispatchPublicationTask(services: Services, id: string) {
 	if (services.env.ENVIRONMENT !== "production") throw new ApiError(403, "PRODUCTION_REQUIRED", "Preview and development cannot dispatch production tasks");
+	// Free mode uses the already-durable task record plus protected reconciliation.
+	// No Queue account, paid transport or extra billing activation is needed.
+	if (services.env.FREE_PLAN === "1" && services.env.PLATFORM === "cloudflare") return;
 	if (services.env.PLATFORM === "cloudflare") {
 		await required(services.env.TASKS, "TASKS Queue binding").send({ type: "publication", publicationId: id });
 		return;

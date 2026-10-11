@@ -1,7 +1,8 @@
 import { ApiError, required } from "./errors.ts";
 import type { R2Like, Services } from "./types.ts";
+import { freePut,freeGet,freeDelete,freeList } from "./free-storage.ts";
 
-export type StorageProvider = "r2" | "local";
+export type StorageProvider = "r2" | "local" | "d1";
 export type StorageObjectInfo = { key: string; size?: number; contentType?: string; provider: StorageProvider };
 export type StorageObject = StorageObjectInfo & { body: ReadableStream<Uint8Array> };
 type Visibility = "private" | "public";
@@ -13,6 +14,7 @@ export function assertStorageKey(key: string): void {
 }
 function provider(services: Services): StorageProvider {
   const env = services.env;
+  if (env.FREE_PLAN === "1") return "d1";
   if (env.PLATFORM === "cloudflare") return "r2";
   const nodeEnv = env.NODE_ENV ?? (typeof process !== "undefined" ? process.env.NODE_ENV : undefined);
   if (env.PLATFORM === "local" && env.ENVIRONMENT === "development" && nodeEnv === "development") return "local";
@@ -37,6 +39,11 @@ function publicOrigin(services: Services): URL {
 async function putObject(services: Services, visibility: Visibility, key: string, bytes: Uint8Array, contentType: string, overwrite: boolean): Promise<{ key: string; provider: StorageProvider; url?: string }> {
   assertStorageKey(key);
   const kind = provider(services);
+  if (kind === "d1") {
+    await freePut(services,visibility,key,bytes,contentType,overwrite);
+    const url=visibility === "public" ? new URL(`/api/public/media/${key}`,required(services.env.BLOG_ORIGIN,"BLOG_ORIGIN")).href : undefined;
+    return {key,provider:kind,...(url ? {url} : {})};
+  }
   if (kind === "r2") {
     const target = bucket(services, visibility);
     const url = visibility === "public" ? new URL(key, ensureSlash(publicOrigin(services))).href : undefined;
@@ -55,6 +62,7 @@ function ensureSlash(url: URL): string { return url.href.replace(/\/*$/, "/"); }
 async function getObject(services: Services, visibility: Visibility, key: string): Promise<StorageObject | null> {
   assertStorageKey(key);
   const kind = provider(services);
+  if (kind === "d1") return freeGet(services,visibility,key);
   if (kind === "r2") {
     const result = await bucket(services, visibility).get(key);
     return result ? { key, provider: kind, body: result.body as ReadableStream<Uint8Array>, contentType: result.httpMetadata?.contentType } : null;
@@ -68,12 +76,14 @@ export function getPublicObject(services: Services, key: string) { return getObj
 export async function deletePrivateObject(services: Services, key: string): Promise<void> {
   assertStorageKey(key);
   const kind = provider(services);
+  if (kind === "d1") return freeDelete(services,key);
   if (kind === "r2") return bucket(services, "private").delete(key);
   return (await local()).localDelete(localRoot(services), "private", key);
 }
 export async function listPrivateObjects(services: Services, prefix = ""): Promise<StorageObjectInfo[]> {
   if (prefix && !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(prefix)) throw new ApiError(400, "INVALID_STORAGE_KEY", "Invalid object prefix");
   const kind = provider(services);
+  if (kind === "d1") return freeList(services,prefix);
   if (kind === "local") return (await local()).localList(localRoot(services), "private", prefix);
   const items: StorageObjectInfo[] = [];
   let cursor: string | undefined;

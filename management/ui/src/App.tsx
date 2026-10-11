@@ -7,6 +7,7 @@ import { Articles } from "./articles";
 import { MediaLibrary } from "./media";
 import { Settings, Navigation, Icons } from "./settings";
 import { Comments, Friends } from "./interactions";
+import { Login } from "./Login";
 type Page = "dashboard" | "articles" | "media" | "settings" | "navigation" | "icons" | "comments" | "friends" | "publications" | "maintenance";
 const pages: { id: Page; name: string; icon: string; group: string }[] = [
 	{ id: "dashboard", name: "仪表盘", icon: "◈", group: "工作台" }, { id: "articles", name: "文章", icon: "▤", group: "内容" }, { id: "media", name: "媒体库", icon: "▧", group: "内容" }, { id: "comments", name: "评论", icon: "◇", group: "互动" }, { id: "friends", name: "友链", icon: "↗", group: "互动" }, { id: "settings", name: "站点设置", icon: "⚙", group: "站点" }, { id: "navigation", name: "导航", icon: "☷", group: "站点" }, { id: "icons", name: "图标", icon: "◉", group: "站点" }, { id: "publications", name: "发布记录", icon: "↑", group: "维护" }, { id: "maintenance", name: "维护与备份", icon: "↻", group: "维护" },
@@ -17,7 +18,7 @@ export function App() {
 	const session = useResource(async () => { const result = await api.get<{ user: User; csrf: string }>("/me"); api.setCsrf(result.csrf); return result; });
 	useEffect(() => { const change = () => { setPage(readPage()); setMobile(false); }; window.addEventListener("hashchange", change); return () => window.removeEventListener("hashchange", change); }, []);
 	if (session.loading && !session.data) return <div className="login-page"><div className="brand-mark">N</div><h1>正在验证管理会话</h1><p>连接同域管理 API…</p></div>;
-	if (!session.data?.user) return <main className="login-page"><div className="login-card"><div className="brand-mark">N</div><p className="eyebrow">NOCTICUR / MANAGEMENT</p><h1>让想法有处安放。</h1><p>文章、媒体和站点的私有工作台。</p><ErrorBox error={session.error} retry={() => void session.refresh()}/><a className="button primary" href="/api/auth/github">使用 GitHub 登录</a><small>仅绑定的 GitHub 数字用户 ID 可进入。会话凭据由安全 Cookie 管理。</small></div></main>;
+	if (!session.data?.user) return <Login error={session.error} retry={session.refresh} onLogin={session.refresh}/>;
 	const user = session.data.user;
 	return <AuthenticatedWorkspace user={user} page={page} mobile={mobile} setMobile={setMobile}/>;
 }

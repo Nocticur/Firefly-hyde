@@ -41,6 +41,7 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 				{processedLink.children?.map((child, index) => (
 					<DropdownItem
 						href={child.external ? child.url : url(child.url)}
+						data-no-swup={child.url === "/admin/" || undefined}
 						target={child.external ? "_blank" : undefined}
 						rel={child.external ? "noopener noreferrer" : undefined}
 						isLast={index === (processedLink.children?.length || 0) - 1}
@@ -59,6 +60,7 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 		<a
 			aria-label={processedLink.name}
 			href={processedLink.external ? processedLink.url : url(processedLink.url)}
+			data-no-swup={processedLink.url === "/admin/" || undefined}
 			target={processedLink.external ? "_blank" : null}
 			rel={processedLink.external ? "noopener noreferrer" : undefined}
 			class="btn-plain scale-animation rounded-lg h-10 font-bold px-4 active:scale-95"

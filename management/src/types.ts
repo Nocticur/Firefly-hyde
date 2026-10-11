@@ -10,11 +10,11 @@ export type Article = {
 export type History = Omit<Article, "publishedVersion" | "publishedHash"> & {
   version: number; reason: "import" | "create" | "save" | "restore" | "publish"; createdAt: string;
 };
-export type Session = { user: { id: number; login: string }; csrf: string; expiresAt: number };
+export type Session = { user: { id: number; login: string }; csrf: string; expiresAt: number; passwordFingerprint?: string };
 export type Media = {
   id: string; filename: string; contentType: string; size: number; alt: string; caption: string;
   owner: number; key: string; status: "pending" | "private" | "published";
-  sha256?: string; url?: string; createdAt: string; provider: "r2" | "local";
+  sha256?: string; url?: string; createdAt: string; provider: "r2" | "local" | "d1";
 };
 export type Comment = {
   id: string; articleId: string; parentId: string | null; name: string; text: string;
@@ -23,7 +23,7 @@ export type Comment = {
 export type Friend = {
   id: string; name: string; url: string; avatar: string; description: string; email: string;
   status: "pending" | "approved" | "rejected"; reason: string; group: string; order: number;
-  live: boolean; notificationStatus: "waiting" | "sent" | "failed"; createdAt: string; message?: string;
+  live: boolean; notificationStatus: "waiting" | "sent" | "failed" | "disabled"; createdAt: string; message?: string;
 };
 export type Task = {
   id: string; type: string; status: "pending" | "running" | "succeeded" | "failed" | "unknown";
@@ -62,6 +62,10 @@ export type Bindings = {
   ENVIRONMENT?: "development" | "preview" | "production";
   PLATFORM?: "cloudflare" | "local";
   ADMIN_ORIGIN?: string; BLOG_ORIGIN?: string; MEDIA_ORIGIN?: string;
+  ADMIN_PATH?: "/" | "/admin/";
+  AUTH_MODE?: "password" | "github"; ADMIN_PASSWORD?: string;
+  FREE_PLAN?: string; MAIL_MODE?: "disabled";
+  GITHUB_PUBLISH_TOKEN?: string;
   ADMIN_GITHUB_USER_ID?: string; GITHUB_OAUTH_CLIENT_ID?: string; GITHUB_OAUTH_CLIENT_SECRET?: string;
   GITHUB_APP_ID?: string; GITHUB_APP_INSTALLATION_ID?: string; GITHUB_APP_PRIVATE_KEY?: string;
   GITHUB_REPOSITORY?: string; GITHUB_BRANCH?: string;

@@ -26,7 +26,7 @@ export function createBlogDeployArgs(
 	return [
 		"deploy",
 		"--env",
-		options.withAdmin ? "production" : "",
+		"",
 		"--tag",
 		expectedSha,
 		...(options.dryRun ? ["--dry-run"] : []),

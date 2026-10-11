@@ -6,7 +6,7 @@ import managedRedirects from "../src/constants/managed-redirects.json" with { ty
  */
 const RETIRED_PATHS = ["/adminmn", "/admin", "/cloud-functions", "/edge-functions", "/.edgeone"];
 
-function retiredPath(pathname) {
+export function retiredPath(pathname, allowAdmin = false) {
 	let decoded = pathname;
 	try {
 		// Asset routing decodes URL paths. Apply the same check before delegating.
@@ -19,7 +19,7 @@ function retiredPath(pathname) {
 		return true;
 	}
 	decoded = new URL(`https://blog.mourn.top${decoded.replaceAll("\\", "/").replace(/\/+/g, "/")}`).pathname.toLowerCase();
-	return RETIRED_PATHS.some((path) => decoded === path || decoded.startsWith(`${path}/`));
+	return RETIRED_PATHS.filter(path => !allowAdmin || path !== "/admin").some((path) => decoded === path || decoded.startsWith(`${path}/`));
 }
 
 function noStore(response) {

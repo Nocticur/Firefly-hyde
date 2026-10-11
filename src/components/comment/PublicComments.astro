@@ -25,7 +25,7 @@ const { articleId } = Astro.props;
     <p data-comment-status class="text-sm text-(--content-meta)" role="status">正在加载评论…</p>
     <div class="flex items-center justify-between gap-3">
       <button type="submit" disabled class="btn-regular rounded-lg px-4 py-2 disabled:opacity-50">发表评论</button>
-      <a href={`https://admin.mourn.top/#comments?articleId=${encodeURIComponent(articleId)}`} class="text-sm text-(--content-meta) hover:text-(--primary)">管理本页评论</a>
+      <a href={`/admin/#comments?articleId=${encodeURIComponent(articleId)}`} data-no-swup class="text-sm text-(--content-meta) hover:text-(--primary)">管理本页评论</a>
     </div>
   </form>
 </public-comments>

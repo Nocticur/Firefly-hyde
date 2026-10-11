@@ -1,9 +1,14 @@
+// Optional isolated management development/preview configuration.
+// The current production entry is the repository-root wrangler.jsonc.
+// Keep Workers Free: no R2, Queue, email billing or automatic production Cron.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "nocticur-firefly-hyde-admin-development",
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "preview_urls": false,
   "assets": {
     "directory": "./ui/dist",
@@ -18,16 +23,23 @@
     "BLOG_ORIGIN": "http://localhost:4321",
     "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
     "GITHUB_BRANCH": "main",
-    "BLOG_WORKER_NAME": "firefly-hyde"
+    "BLOG_WORKER_NAME": "firefly-hyde",
+    "AUTH_MODE": "password",
+    "FREE_PLAN": "1",
+    "MAIL_MODE": "disabled"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "nocticur-admin-development", "migrations_dir": "migrations", "remote": false }
+    {
+      "binding": "DB",
+      "database_name": "nocticur-admin-development",
+      "migrations_dir": "migrations",
+      "remote": false
+    }
   ],
-  "r2_buckets": [
-    { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-development", "remote": false },
-    { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-development", "remote": false }
-  ],
-  "triggers": { "crons": [] },
+  "r2_buckets": [],
+  "triggers": {
+    "crons": []
+  },
   "env": {
     "preview": {
       "name": "nocticur-firefly-hyde-admin-preview",
@@ -41,17 +53,20 @@
         "MEDIA_ORIGIN": "https://media-preview.mourn.top",
         "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
         "GITHUB_BRANCH": "preview",
-        "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog-preview"
+        "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog-preview",
+        "AUTH_MODE": "password",
+        "FREE_PLAN": "1",
+        "MAIL_MODE": "disabled"
       },
-      // Insert only the real, isolated preview DB binding after it is created.
-      // Without DB the API fails closed; it never falls back to a local database.
       "d1_databases": [],
-      "r2_buckets": [
-        { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-preview" },
-        { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-preview" }
-      ],
-      "triggers": { "crons": [] },
-      "queues": { "producers": [], "consumers": [] }
+      "r2_buckets": [],
+      "triggers": {
+        "crons": []
+      },
+      "queues": {
+        "producers": [],
+        "consumers": []
+      }
     },
     "production": {
       "name": "nocticur-firefly-hyde-admin",
@@ -68,20 +83,20 @@
         "BLOG_WORKER_NAME": "firefly-hyde",
         "GITHUB_BUILD_CHECK_NAME": "Workers Builds: firefly-hyde",
         "GITHUB_BUILD_CHECK_APP_ID": "85455",
-        "BACKUP_PREFIX": "backups/"
+        "BACKUP_PREFIX": "backups/",
+        "AUTH_MODE": "password",
+        "FREE_PLAN": "1",
+        "MAIL_MODE": "disabled"
       },
-      // REQUIRED before deployment: add DB with the actual D1 database_id.
-      // No production resource ID is invented or stored in this template.
       "d1_databases": [],
-      "r2_buckets": [
-        { "binding": "PRIVATE_MEDIA", "bucket_name": "nocticur-admin-private-production" },
-        { "binding": "PUBLIC_MEDIA", "bucket_name": "nocticur-admin-public-production" }
-      ],
+      "r2_buckets": [],
       "queues": {
-        "producers": [{ "binding": "TASKS", "queue": "nocticur-admin-tasks-production" }],
-        "consumers": [{ "queue": "nocticur-admin-tasks-production", "max_batch_size": 10, "max_batch_timeout": 5, "max_retries": 20, "dead_letter_queue": "nocticur-admin-tasks-failed-production" }]
+        "producers": [],
+        "consumers": []
       },
-      "triggers": { "crons": ["* * * * *"] }
+      "triggers": {
+        "crons": []
+      }
     }
   }
 }

@@ -3,8 +3,9 @@ import { z } from "zod";
 import { checkUpdates } from "./updates.ts";
 import { ApiError,required } from "./errors.ts";
 import { importBaseline } from "./content.ts";
+import initialBaseline from "../baseline.json" with { type: "json" };
 import { sha256 } from "./security.ts";
-import { getPrivateObject,listPrivateObjects,putPrivateObject,readLimited } from "./storage.ts";
+import { getPrivateObject,listPrivateObjects,putPrivateObject,readLimited,deletePrivateObject } from "./storage.ts";
 import type { Change } from "./store.ts";
 import type { AppEnv,Friend,MailAttempt,Media,Services,SiteLock,SqlStatement,Task } from "./types.ts";
 
@@ -157,7 +158,7 @@ export async function runMaintenance(services:Services,options:{backup?:boolean}
       try{const result=await createBackup(services);const fresh=await services.store.get("daily-backup",day);const value={status:"succeeded",backupId:result.id};if(fresh)await services.store.update("daily-backup",day,fresh.version,value);else await services.store.create("daily-backup",day,value);}finally{await services.store.releaseLease(`daily-backup-${day}`,owner,lease.value.fence);}
     }
   }
-  for(const row of await services.store.all<Outbox>("outbox")){try{await sendOutbox(services,row);}catch(error){if(!(error instanceof ApiError&&error.code==="LEASE_BUSY"))throw error;}}
+  if(services.env.MAIL_MODE !== "disabled")for(const row of await services.store.all<Outbox>("outbox")){try{await sendOutbox(services,row);}catch(error){if(!(error instanceof ApiError&&error.code==="LEASE_BUSY"))throw error;}}
   for(const row of await services.store.all<Task>("task")){
     if(!["backup","restore","verify-backup","check-updates","rebuild-index","clear-cache"].includes(row.value.type)||!["pending","running","unknown"].includes(row.value.status)||(row.value.nextRunAt??0)>services.now())continue;
     const owner=`${row.id}:${crypto.randomUUID()}`;let lease;try{lease=await services.store.acquireLease(`maintenance-${row.id}`,owner,120_000);}catch(error){if(error instanceof ApiError&&error.code==="LEASE_BUSY")continue;throw error;}
@@ -178,6 +179,15 @@ export async function runMaintenance(services:Services,options:{backup?:boolean}
   for(const kind of ["oauth-state","session","rate"]){for(const row of await services.store.all<{expiresAt:number}>(kind))if(row.value.expiresAt<services.now())try{await services.store.atomic([{kind,id:row.id,expectedVersion:row.version,remove:true}]);}catch(error){if(!(error instanceof ApiError&&error.status===409))throw error;}}
 }
 export function registerMaintenance(app:Hono<AppEnv>){
+  app.post("/api/maintenance/initialize",async c=>{
+    const services=c.get("services");
+    if(services.env.GITHUB_REPOSITORY!==initialBaseline.repository || (services.env.GITHUB_BRANCH ?? "main")!==initialBaseline.branch)throw new ApiError(400,"BASELINE_TARGET_MISMATCH","Initialize only the configured Nocticur/Firefly-hyde main repository");
+    return c.json(await importBaseline(services,initialBaseline));
+  });
+  app.post("/api/maintenance/reconcile",async c=>{
+    await runMaintenance(c.get("services"));
+    return c.json({ok:true});
+  });
   app.post("/api/maintenance/import-baseline",async c=>{
     const services=c.get("services");
     const baseline=z.object({schemaVersion:z.literal(1),repository:z.string(),branch:z.string(),articles:z.array(z.object({id:z.string().uuid(),path:z.string(),slug:z.string(),raw:z.string().max(2_000_000),draft:z.boolean().optional(),title:z.string().optional()})).max(100),settings:z.record(z.string(),z.unknown()).optional(),navigation:z.array(z.any()).optional()}).parse(await c.req.json());
@@ -186,6 +196,20 @@ export function registerMaintenance(app:Hono<AppEnv>){
   });
   app.get("/api/maintenance/tasks",async c=>c.json({items:(await c.get("services").store.all<Task>("task")).map(x=>({...x.value,version:x.version}))}));
   app.get("/api/maintenance/backups",async c=>c.json({items:(await c.get("services").store.all("backup")).map(x=>({...x.value as object,version:x.version}))}));
+  app.get("/api/maintenance/backups/:id/download",async c=>{
+    const backup=await validatedBackup(c.get("services"),c.req.param("id"));
+    return new Response(JSON.stringify(backup),{headers:{"Content-Type":"application/json","Content-Disposition":`attachment; filename="backup-${backup.id.replace(/[^A-Za-z0-9-]/g,"")}.json"`,"Cache-Control":"no-store"}});
+  });
+  app.delete("/api/maintenance/backups/:id",async c=>{
+    const services=c.get("services"),row=await services.store.get<{key:string}>("backup",c.req.param("id"));
+    if(!row)throw new ApiError(404,"BACKUP_NOT_FOUND","Backup not found");
+    const body=z.object({version:z.number().int().positive()}).strict().parse(await c.req.json());
+    const running=await services.store.all<Task>("task");
+    if(running.some(task=>task.value.payload?.backupId===row.id && ["pending","running","unknown"].includes(task.value.status)))throw new ApiError(409,"BACKUP_IN_USE","This backup has an active verification or restoration task");
+    await services.store.atomic([{kind:"backup",id:row.id,expectedVersion:body.version,remove:true}]);
+    await deletePrivateObject(services,row.value.key);
+    return c.json({ok:true});
+  });
   app.get("/api/maintenance/outbox",async c=>c.json({items:(await c.get("services").store.all("outbox")).map(x=>({...x.value as object,version:x.version}))}));
   app.post("/api/maintenance/tasks",async c=>{
     const input=z.object({type:z.enum(["backup","restore","verify-backup","check-updates","rebuild-index","clear-cache"]),payload:z.record(z.string(),z.unknown()).default({})}).parse(await c.req.json()),services=c.get("services"),now=new Date(services.now()).toISOString();

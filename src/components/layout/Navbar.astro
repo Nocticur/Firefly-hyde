@@ -200,6 +200,9 @@ const logoVariants = await Promise.all(
                 })}
             </div>
             <div class="flex col-start-3 justify-self-end">
+                <a href={url("/admin/")} data-no-swup aria-label="后台管理" title="后台管理" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90">
+                    <Icon name="material-symbols:admin-panel-settings-outline" class="text-[1.25rem]" />
+                </a>
                 <!--<SearchPanel client:load>-->
                 <Search
                     client:idle

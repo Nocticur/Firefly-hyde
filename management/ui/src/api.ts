@@ -22,6 +22,7 @@ export class ApiClient {
 		const response = await fetch(`/api${path}`, { method, headers, credentials: "same-origin", cache: "no-store", body: options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body)), signal: options.signal });
 		const payload = await response.json().catch(() => ({}));
 		if (!response.ok) throw new ApiError(response.status, payload.error?.code ?? "http_error", payload.error?.message ?? `请求失败（${response.status}）`, payload.error?.details ?? payload.details);
+		if(method === "POST" && path === "/publications" && typeof window !== "undefined")window.dispatchEvent(new Event("management-publication-created"));
 		return payload as T;
 	}
 	get<T>(path: string) { return this.request<T>(path); }
