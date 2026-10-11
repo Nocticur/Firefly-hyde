@@ -10,8 +10,14 @@ const cookieName=(services:Services,state=false)=>`${services.env.ENVIRONMENT===
 const options=(services:Services,maxAge:number)=>({httpOnly:true,secure:services.env.ENVIRONMENT!=="development",sameSite:"Lax" as const,path:"/",maxAge});
 async function passwordFingerprint(services:Services,password?:string){
   const configured=required(services.env.ADMIN_PASSWORD,"ADMIN_PASSWORD");
-  if(configured.length<12 || configured.length>256)throw new ApiError(503,"CONFIG_INVALID","ADMIN_PASSWORD must contain 12 to 256 characters");
-  return sha256(`${required(services.env.IP_HASH_SECRET,"IP_HASH_SECRET")}:admin-password:${password ?? configured}`);
+  if(configured.length<3 || configured.length>10)throw new ApiError(503,"CONFIG_INVALID","ADMIN_PASSWORD must contain 3 to 10 characters");
+  // Keep the original password in the runtime Secret; persist only a keyed fingerprint.
+  const encoder=new TextEncoder();
+  const secret=required(services.env.IP_HASH_SECRET,"IP_HASH_SECRET");
+  if(secret.length<32)throw new ApiError(503,"CONFIG_INVALID","IP_HASH_SECRET must contain at least 32 random characters");
+  const key=await crypto.subtle.importKey("raw",encoder.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  const fingerprint=await crypto.subtle.sign("HMAC",key,encoder.encode(`admin-password:${password ?? configured}`));
+  return Array.from(new Uint8Array(fingerprint),x=>x.toString(16).padStart(2,"0")).join("");
 }
 async function issueSession(c:any,user:Session["user"],fingerprint?:string){
   const services:Services=c.get("services");const token=randomToken();
@@ -46,7 +52,7 @@ export function registerAuth(app:Hono<AppEnv>){
     await rateLimit(services,"password-login:all",60,15*60*1000);
     await rateLimit(services,`password-login:${ip}`,5,15*60*1000);
     await services.store.db.query({sql:"DELETE FROM records WHERE kind IN ('rate','session','oauth-state') AND CAST(json_extract(value,'$.expiresAt') AS INTEGER)<=?",params:[services.now()]});
-    const input=z.object({password:z.string().min(1).max(256)}).strict().parse(await c.req.json());
+    const input=z.object({password:z.string().min(3).max(10)}).strict().parse(await c.req.json());
     const expected=await passwordFingerprint(services);
     if(!constantEqual(expected,await passwordFingerprint(services,input.password)))throw new ApiError(401,"LOGIN_FAILED","密码不正确，请重试");
     const id=Number(required(services.env.ADMIN_GITHUB_USER_ID,"ADMIN_GITHUB_USER_ID"));

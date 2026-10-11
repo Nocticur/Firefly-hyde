@@ -55,6 +55,7 @@ async function fetchRepositoryData(repo: string): Promise<GithubCardData> {
 		`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
 		{
 			headers,
+			redirect: "error",
 			signal: AbortSignal.timeout(5000),
 		},
 	);

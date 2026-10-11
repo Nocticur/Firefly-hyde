@@ -58,9 +58,10 @@ export function registerInteractions(app:Hono<AppEnv>){
     if(!approved&&!input.reason.trim())throw new ApiError(400,"REASON_REQUIRED","A rejection reason is required");
     const services:Services=c.get("services"),row=await services.store.get<Friend>("friend",c.req.param("id"));if(!row)throw new ApiError(404,"FRIEND_NOT_FOUND","Friend not found");
     if(row.value.status!=="pending")throw new ApiError(409,"ALREADY_REVIEWED","This application was already reviewed");
-    const status=approved?"approved":"rejected",value:Friend={...row.value,status,reason:input.reason,group:input.group,order:input.order,live:false,notificationStatus:services.env.MAIL_MODE === "disabled" ? "disabled" : "waiting"};
+    const mailDisabled=services.env.FREE_PLAN === "1" || services.env.MAIL_MODE === "disabled";
+    const status=approved?"approved":"rejected",value:Friend={...row.value,status,reason:input.reason,group:input.group,order:input.order,live:false,notificationStatus:mailDisabled ? "disabled" : "waiting"};
     const key=`friend:${row.id}:${status}`,now=new Date(services.now()).toISOString();
-    await services.store.atomic([{kind:"friend",id:row.id,value,expectedVersion:input.version},...(services.env.MAIL_MODE === "disabled" ? [] : [{kind:"outbox",id:key,expectedVersion:null,value:{id:key,notificationKey:key,friendId:row.id,type:`friend-${status}`,recipient:row.value.email,reason:input.reason,status:approved?"waiting":"pending",attempts:0,createdAt:now,updatedAt:now}}])]);
+    await services.store.atomic([{kind:"friend",id:row.id,value,expectedVersion:input.version},...(mailDisabled ? [] : [{kind:"outbox",id:key,expectedVersion:null,value:{id:key,notificationKey:key,friendId:row.id,type:`friend-${status}`,recipient:row.value.email,reason:input.reason,status:approved?"waiting":"pending",attempts:0,createdAt:now,updatedAt:now}}])]);
     return c.json({...value,version:input.version+1});
   };
   app.post("/api/friends/:id/approve",approveOrReject(true));app.post("/api/friends/:id/reject",approveOrReject(false));

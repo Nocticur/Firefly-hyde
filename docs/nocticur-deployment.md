@@ -47,8 +47,8 @@ Cloudflare Settings → Builds：
 
 | 名称 | 是否必需 | 指向什么 |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | 登录必需，Secret | 你设置的后台密码，12–256 字符，推荐随机长密码 |
-| `IP_HASH_SECRET` | 登录必需，Secret | 独立随机字符串，用于限流标识及会话密码指纹，建议至少 32 随机字符 |
+| `ADMIN_PASSWORD` | 登录必需，Secret | 你设置的后台原始密码，3–10 字符；服务端自动哈希，无需手动加密 |
+| `IP_HASH_SECRET` | 登录必需，Secret | 独立随机字符串，用于限流标识及会话密码指纹，至少 32 字符；不能与短密码相同 |
 | `GITHUB_PUBLISH_TOKEN` | 在线发布必需，Secret | 仅授权 `Nocticur/Firefly-hyde` 的 fine-grained GitHub token；Contents 写入、Checks 读取、Metadata 读取 |
 | `CLOUDFLARE_ACCOUNT_ID` | 发布核验必需，变量 | 部署 `firefly-hyde` 的 Cloudflare 账号 ID |
 | `CLOUDFLARE_API_TOKEN` | 发布核验必需，Secret | 读取此账号 Worker 当前部署和版本；本机创建 D1 时需另具 D1 编辑权限 |
@@ -62,11 +62,15 @@ Cloudflare Settings → Builds：
 
 ## 登录、初始化与维护
 
-点击博客导航栏“后台管理”。密码经同域 POST 发送，只在 Worker 中比对。正确后使用 HttpOnly/Secure/SameSite Cookie；写操作继续验证 CSRF。单个 IP 每 15 分钟最多 5 次验证，全站最多 60 次；修改密码会使旧会话失效。没有正确密码的请求不能读取文章、草稿、媒体、备份或管理接口。旧 `/adminmn`、EdgeOne/Cloud Functions、非新界面的 `/admin/*` 路径仍停用。
+点击博客导航栏“后台管理”。在 `ADMIN_PASSWORD` Secret 填写 3–10 字符原始密码，无需自行加密或填写哈希值。密码经 HTTPS 同域 POST 发送，Worker 使用独立 `IP_HASH_SECRET` 自动计算 HMAC-SHA256 指纹，进行恒定时间比对；数据库会话只保存指纹，接口、静态产物和备份不返回环境变量密码。Cloudflare Secret 的静态加密由平台管理；普通文本环境变量不代替 Secret。短密码应优先使用 10 位随机字母、数字和符号组合。
+
+正确后使用 HttpOnly/Secure/SameSite Cookie；写操作继续验证 CSRF。单个 IP 每 15 分钟最多 5 次验证，全站最多 60 次；修改密码或独立密钥会使旧会话失效。没有正确密码的请求不能读取文章、草稿、媒体、备份或管理接口。旧 `/adminmn`、EdgeOne/Cloud Functions、非新界面的 `/admin/*` 路径仍停用。
 
 首次登录后到“维护与备份”点击“导入本站内容”，幂等导入 16 篇原文、设置和导航，不发布、不覆盖已有编辑。后台原文、未知 YAML 字段、MDX、稳定文章 ID 与网址的保护仍保留。
 
 免费模式通过已登录后台的受保护核验请求处理已有发布和维护任务，不依赖队列。创建维护任务会立即尝试处理；关闭后台后，未完成任务保留，重新打开继续核验。默认不占用 Cron 配额；确需无人值守时可在确认该账号 Free Cron 配额后为此 Worker 单独配置定时触发，不能调整其他项目。
+
+整个 zone 的“清缓存”任务已停用，避免影响其他项目；无需填写 `CLOUDFLARE_ZONE_ID` 或授予 Cache Purge 权限。本地 Node 开发入口只监听回环地址，默认不自动维护；只有显式设置本地变量 `LOCAL_MAINTENANCE_AUTORUN=1` 才轮询。它不继承生产发布、Cloudflare 或邮件凭据。
 
 在“维护与备份”下载 JSON 备份并保存到自己的设备，确认后可删除旧备份释放空间。JSON 含私有记录与媒体清单；要在数据库整体损坏时恢复图片字节，须同时通过 D1 控制台导出整个数据库。同一数据库中的备份不是独立灾备。
 
@@ -83,3 +87,5 @@ Cloudflare Settings → Builds：
 后台发布仍核对完整 Git SHA、官方 Cloudflare Check 名称与 App ID、生产 Worker 版本、Worker tag、域名清单与冻结原文哈希。构建成功不替代实际生产版本核验。当前实例未获得 Cloudflare API 认证时，不能宣称真实 D1 已创建、Secrets 已填写或生产密码登录已验收。
 
 旧独立 Worker/R2/Queue/OAuth/邮件部署记录仅作历史参考：[旧方案](legacy-deployment/nocticur-separate-worker-plan.md)。历史文件的付费服务或变量清单不适用于本次免费同域方案。
+
+密码哈希、凭据扫描、权限、后台进程、数据外发、修复和验证边界见 [本次安全检查](security-review.md)。

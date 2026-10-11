@@ -122,12 +122,8 @@ async function performTask(services:Services,task:Task):Promise<unknown>{
     case "verify-backup":return verifyBackup(services,String(task.payload.backupId??""));
     case "check-updates":return checkUpdates(services);
     case "clear-cache":{
-      // APIs, private previews and release manifests are always no-store. Only
-      // platform public asset caches may be purged through their official API.
-      const account=required(services.env.CLOUDFLARE_ACCOUNT_ID,"CLOUDFLARE_ACCOUNT_ID"),token=required(services.env.CLOUDFLARE_API_TOKEN,"CLOUDFLARE_API_TOKEN");
-      const zone=required(services.env.CLOUDFLARE_ZONE_ID,"CLOUDFLARE_ZONE_ID");
-      const response=await services.fetcher(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify({purge_everything:true}),signal:AbortSignal.timeout(15000)});
-      if(!response.ok)throw new ApiError(502,"CACHE_PURGE_FAILED","Cloudflare cache purge failed");return {purged:true,accountConfigured:Boolean(account)};
+      // Never let a restored legacy task purge caches belonging to other projects.
+      throw new ApiError(400,"CACHE_PURGE_DISABLED","Zone-wide cache purging is disabled; deployments refresh this blog's assets");
     }
     case "rebuild-index":{
       const {freezePublication,processPublication}=await import("./publishing.ts");
@@ -158,7 +154,7 @@ export async function runMaintenance(services:Services,options:{backup?:boolean}
       try{const result=await createBackup(services);const fresh=await services.store.get("daily-backup",day);const value={status:"succeeded",backupId:result.id};if(fresh)await services.store.update("daily-backup",day,fresh.version,value);else await services.store.create("daily-backup",day,value);}finally{await services.store.releaseLease(`daily-backup-${day}`,owner,lease.value.fence);}
     }
   }
-  if(services.env.MAIL_MODE !== "disabled")for(const row of await services.store.all<Outbox>("outbox")){try{await sendOutbox(services,row);}catch(error){if(!(error instanceof ApiError&&error.code==="LEASE_BUSY"))throw error;}}
+  if(services.env.FREE_PLAN !== "1" && services.env.MAIL_MODE !== "disabled")for(const row of await services.store.all<Outbox>("outbox")){try{await sendOutbox(services,row);}catch(error){if(!(error instanceof ApiError&&error.code==="LEASE_BUSY"))throw error;}}
   for(const row of await services.store.all<Task>("task")){
     if(!["backup","restore","verify-backup","check-updates","rebuild-index","clear-cache"].includes(row.value.type)||!["pending","running","unknown"].includes(row.value.status)||(row.value.nextRunAt??0)>services.now())continue;
     const owner=`${row.id}:${crypto.randomUUID()}`;let lease;try{lease=await services.store.acquireLease(`maintenance-${row.id}`,owner,120_000);}catch(error){if(error instanceof ApiError&&error.code==="LEASE_BUSY")continue;throw error;}
@@ -213,6 +209,7 @@ export function registerMaintenance(app:Hono<AppEnv>){
   app.get("/api/maintenance/outbox",async c=>c.json({items:(await c.get("services").store.all("outbox")).map(x=>({...x.value as object,version:x.version}))}));
   app.post("/api/maintenance/tasks",async c=>{
     const input=z.object({type:z.enum(["backup","restore","verify-backup","check-updates","rebuild-index","clear-cache"]),payload:z.record(z.string(),z.unknown()).default({})}).parse(await c.req.json()),services=c.get("services"),now=new Date(services.now()).toISOString();
+    if(input.type === "clear-cache")throw new ApiError(400,"CACHE_PURGE_DISABLED","Zone-wide cache purging is disabled; deployments refresh this blog's assets");
     if(["restore","verify-backup"].includes(input.type) && (typeof input.payload.backupId!=="string"||!input.payload.backupId))throw new ApiError(400,"BACKUP_REQUIRED","Select a verified private backup");
     if(input.type==="restore" && input.payload.confirm!=="RESTORE_PRIVATE_DATA")throw new ApiError(400,"RESTORE_CONFIRM_REQUIRED","Review the backup and send confirm=RESTORE_PRIVATE_DATA");
     const task:Task={id:crypto.randomUUID(),type:input.type,status:"pending",payload:input.payload,createdAt:now,updatedAt:now,attempts:0};await services.store.create("task",task.id,task);
@@ -220,10 +217,11 @@ export function registerMaintenance(app:Hono<AppEnv>){
   });
   app.post("/api/maintenance/tasks/:id/retry",async c=>{
     const input=z.object({version:z.number().int().positive()}).parse(await c.req.json()),services=c.get("services"),row=await services.store.get<Task>("task",c.req.param("id"));if(!row)throw new ApiError(404,"TASK_NOT_FOUND","Task not found");if(!["failed","unknown"].includes(row.value.status))throw new ApiError(409,"TASK_NOT_RETRYABLE","Only failed or unconfirmed tasks can be retried");
-    if(row.value.publicationId)throw new ApiError(409,"RECONCILE_REQUIRED","Reconcile this publication before retrying a commit");const next=await services.store.update("task",row.id,input.version,{...row.value,status:"pending",error:undefined,nextRunAt:services.now()});if(services.env.TASKS)await services.env.TASKS.send({taskId:row.id,type:"maintenance"});return c.json({...next.value,version:next.version},202);
+    if(row.value.publicationId)throw new ApiError(409,"RECONCILE_REQUIRED","Reconcile this publication before retrying a commit");const next=await services.store.update("task",row.id,input.version,{...row.value,status:"pending",error:undefined,nextRunAt:services.now()});await dispatchMaintenance(services,row.id);return c.json({...next.value,version:next.version},202);
   });
 }
 async function dispatchMaintenance(services:Services,id:string){
+  if(services.env.FREE_PLAN === "1")return;
   if(services.env.TASKS)return services.env.TASKS.send({taskId:id,type:"maintenance"});
   if(services.env.ENVIRONMENT==="production")throw new ApiError(503,"CONFIG_REQUIRED","TASKS queue binding is required for maintenance wake-up delivery");
 }

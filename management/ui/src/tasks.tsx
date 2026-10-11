@@ -18,7 +18,6 @@ export function Publications() {
 const operations = [
 	{ type: "check-updates", title: "检查主题与后台更新", text: "读取上游版本差异，不直接覆盖本地修改。" },
 	{ type: "rebuild-index", title: "重建搜索索引", text: "运行完整构建中的 Pagefind；发布后核验搜索版本。" },
-	{ type: "clear-cache", title: "缓存维护", text: "维护已发布静态缓存；动态接口、草稿与发布清单保持禁缓存。" },
 	{ type: "backup", title: "创建私有备份", text: "备份私有数据、稳定 ID、媒体清单和未完成任务。" },
 	{ type: "verify-backup", title: "验证备份恢复", text: "只读核验校验摘要、记录格式与私有媒体内容，不恢复或覆盖数据。" },
 	{ type: "restore", title: "恢复备份", text: "恢复前额外备份；数据和媒体与代码回滚分别处理。" },

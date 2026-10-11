@@ -59,7 +59,7 @@ const requestSchemas:Record<string,unknown>={
   "/api/friends/{id}/reject":{type:"object",required:["version","reason"],properties:{version,reason:string}},
   "/api/friends/sorting":{type:"object",required:["items"],properties:{items:{type:"array",items:{type:"object",required:["id","version","group","order"],properties:{id:string,version,group:string,order:{type:"integer"}}}}}},
   "/api/publications":{type:"object",required:["articleIds","expectedVersions"],properties:{articleIds:{type:"array",items:string},expectedVersions:{type:"object",additionalProperties:version},settingsVersion:version,navigationVersion:version}},
-  "/api/maintenance/tasks":{type:"object",required:["type"],properties:{type:{type:"string",enum:["backup","restore","verify-backup","check-updates","rebuild-index","clear-cache"]},payload:{type:"object",properties:{backupId:string,confirm:{type:"string",const:"RESTORE_PRIVATE_DATA"}},description:"Restore requires a backupId and explicit confirmation string"}}},
+  "/api/maintenance/tasks":{type:"object",required:["type"],properties:{type:{type:"string",enum:["backup","restore","verify-backup","check-updates","rebuild-index"]},payload:{type:"object",properties:{backupId:string,confirm:{type:"string",const:"RESTORE_PRIVATE_DATA"}},description:"Restore requires a backupId and explicit confirmation string; zone-wide cache purging is disabled"}}},
   "/api/maintenance/tasks/{id}/retry":{type:"object",required:["version"],properties:{version}},
 };
 for(const [path,methods,admin,summary] of entries){

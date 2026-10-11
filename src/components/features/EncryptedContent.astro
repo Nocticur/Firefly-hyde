@@ -83,7 +83,8 @@ const labels = {
 
   var encryptedData = container.getAttribute('data-encrypted');
   var slug = container.getAttribute('data-slug');
-  var cacheKey = 'pw:' + slug;
+  // Remove old plaintext password caches without reading their values.
+  try { sessionStorage.removeItem('pw:' + slug); } catch (_) {}
 
   var ui = document.getElementById('password-ui');
   var form = document.getElementById('password-form');
@@ -185,21 +186,13 @@ const labels = {
     if (!pwd) return;
     hideError();
     decrypt(pwd).then(function(html) {
-      sessionStorage.setItem(cacheKey, pwd);
+      input.value = '';
+      pwd = '';
       showContent(html);
     }).catch(function() {
       showError();
     });
   });
 
-  // Try cached password
-  var cached = sessionStorage.getItem(cacheKey);
-  if (cached) {
-    decrypt(cached).then(function(html) {
-      showContent(html);
-    }).catch(function() {
-      sessionStorage.removeItem(cacheKey);
-    });
-  }
 })();
 </script>

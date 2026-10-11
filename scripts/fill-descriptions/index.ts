@@ -1,7 +1,7 @@
 /**
  * AI 摘要生成脚本
- * 运行方式: pnpm fill-descriptions
- * 等价于: npx tsx scripts/fill-descriptions/index.ts
+ * 运行方式: pnpm fill-descriptions --allow-external-ai
+ * 明确同意后才会读取文章，并向配置的外部 AI 服务发送文章节选。
  *
  * 功能：
  * - 扫描 src/content/posts/ 下所有 .md/.mdx 文件
@@ -19,35 +19,21 @@ const PROJECT_ROOT = path.resolve(
   "../..",
 );
 
-function loadEnvFile() {
-  const envPath = path.join(PROJECT_ROOT, ".env");
-  // 按 \r?\n 分割，兼容 Windows；.env 中的值覆盖空环境变量
-  for (const line of fs.readFileSync(envPath, "utf-8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const equalsIdx = trimmed.indexOf("=");
-    if (equalsIdx === -1) continue;
-
-    const key = trimmed.slice(0, equalsIdx).trim();
-    let val = trimmed.slice(equalsIdx + 1).trim();
-
-    // 去除引号
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1);
-    }
-
-    if (val) process.env[key] = val;
-  }
+if (!process.argv.includes("--allow-external-ai")) {
+  console.error("已停止：只有显式传入 --allow-external-ai，才会读取文章并向外部 AI 服务发送节选。默认构建不运行此工具。");
+  process.exit(1);
 }
-
-loadEnvFile();
 
 const QWEN_BASE_URL =
   process.env.QWEN_BASE_URL ||
   "https://dashscope.aliyuncs.com/compatible-mode/v1";
 const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-plus";
 const QWEN_API_KEY = process.env.QWEN_API_KEY || "";
+const providerUrl = new URL(QWEN_BASE_URL);
+if (providerUrl.protocol !== "https:" || providerUrl.username || providerUrl.password || providerUrl.search || providerUrl.hash) {
+  console.error("QWEN_BASE_URL 必须是无凭据和查询参数的 HTTPS 服务地址。");
+  process.exit(1);
+}
 
 const POSTS_DIR = path.join(PROJECT_ROOT, "src/content/posts");
 
@@ -183,6 +169,8 @@ async function generateDescription(
     try {
       const resp = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
         method: "POST",
+        redirect: "error",
+        signal: AbortSignal.timeout(30_000),
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${QWEN_API_KEY}`,
@@ -199,8 +187,8 @@ async function generateDescription(
       });
 
       if (!resp.ok) {
-        const errorText = await resp.text();
-        console.error(`  API 请求失败 (状态码: ${resp.status}): ${errorText.substring(0, 200)}`);
+        await resp.body?.cancel();
+        console.error(`  API 请求失败 (状态码: ${resp.status})`);
         if (attempt < MAX_RETRIES) {
           console.log(`  重试中... (${attempt + 1}/${MAX_RETRIES})`);
           await sleep(1500 * (attempt + 1));

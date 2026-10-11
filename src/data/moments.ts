@@ -3,6 +3,8 @@
  * 从 GitHub Gist 加载朋友圈数据并动态插入页面
  */
 
+import { renderMomentsMarkdown } from "@/utils/moments-markdown";
+
 const cacheKey = "__externalMomentsCache";
 const MARKER = "data-ext-inserted";
 
@@ -54,23 +56,6 @@ function formatTimeAgo(date: Date): string {
 	);
 }
 
-function escapeHtml(text: string): string {
-	const div = document.createElement("div");
-	div.textContent = text;
-	return div.innerHTML;
-}
-
-function renderMarkdown(text: string): string {
-	return escapeHtml(text)
-		.replace(/\n/g, "<br>")
-		.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-		.replace(/\*(.*?)\*/g, "<em>$1</em>")
-		.replace(
-			/(https?:\/\/[^\s<]+)/g,
-			'<a href="$1" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:underline;">$1</a>',
-		);
-}
-
 function getGridCols(count: number): number {
 	if (count === 1) return 1;
 	if (count === 2 || count === 4) return 2;
@@ -109,7 +94,7 @@ function createCard(m: {
 	const avatar = m.avatar || defaultAvatar;
 	const date = new Date(m.published);
 	const timeStr = formatTimeAgo(date);
-	const content = renderMarkdown(m.content || "");
+	const content = renderMomentsMarkdown(m.content || "");
 	const images = parseImages(m.images);
 	const tags = m.tags || [];
 	const location = m.location || "";
@@ -418,12 +403,10 @@ function fetchMoments(): void {
 		return;
 	}
 
-	// 获取 GitHub Token（可选）
-	const token = localStorage.getItem("gh_moments_token") || "";
+	// Public Gists are fetched anonymously; never read a browser-held credential.
 	const headers: Record<string, string> = {
 		Accept: "application/vnd.github+json",
 	};
-	if (token) headers["Authorization"] = "Bearer " + token;
 
 	fetch("https://api.github.com/gists/" + config.gistId, { headers })
 		.then((r) => {
@@ -462,11 +445,9 @@ function fetchPinned(): void {
 		return;
 	}
 
-	const token = localStorage.getItem("gh_moments_token") || "";
 	const headers: Record<string, string> = {
 		Accept: "application/vnd.github+json",
 	};
-	if (token) headers["Authorization"] = "Bearer " + token;
 
 	fetch("https://api.github.com/gists/" + config.gistId, { headers })
 		.then((r) => {

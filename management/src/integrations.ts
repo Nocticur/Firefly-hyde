@@ -95,7 +95,7 @@ async function githubJwt(services: Services) {
 
 async function requestJson(services: Services, url: string, init: RequestInit = {}) {
 	let response: Response;
-	try { response = await services.fetcher(url, { ...init, signal: AbortSignal.timeout(25_000), cache: "no-store" }); }
+	try { response = await services.fetcher(url, { ...init, redirect: "error", signal: AbortSignal.timeout(25_000), cache: "no-store" }); }
 	catch { throw new ApiError(502, "UPSTREAM_UNCERTAIN", "The upstream request did not return a conclusive response"); }
 	if (!response.ok) throw new ApiError(response.status === 409 || response.status === 422 ? 409 : 502, "UPSTREAM_REJECTED", `Upstream returned HTTP ${response.status}`, { upstreamStatus: response.status });
 	try { return await response.json() as any; }

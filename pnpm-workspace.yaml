@@ -1,9 +1,7 @@
 packages:
   - '.'
-# 临时兼容CNB无交互构建：放开所有依赖构建脚本
-dangerouslyAllowAllBuilds: true
-# 临时关闭新版本包24小时冷却校验，适配私有包高频迭代
-minimumReleaseAge: 0
+# Only the explicitly listed native tools may run installation scripts.
+minimumReleaseAge: 1440
 allowBuilds:
   esbuild: true
   workerd: true
@@ -25,3 +23,8 @@ overrides:
   'devalue@>=5.0.0 <5.9.3': 5.9.3
   'http-cache-semantics@>=4.0.0 <4.3.0': 4.3.0
   'source-map-js@>=1.0.0 <1.2.2': 1.2.2
+  # Argparse 2 retains legacy method aliases and drops sprintf-js entirely.
+  'js-yaml@3>argparse': 2.0.1
+  'smol-toml@>=1.0.0 <1.8.1': 1.9.1
+  'postcss-selector-parser@>=6.0.0 <7.1.6': 7.1.6
+  'katex@>=0.16.0 <0.18.7': 0.18.7
