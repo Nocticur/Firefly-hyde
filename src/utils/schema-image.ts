@@ -181,10 +181,7 @@ async function computeSiteLogo(): Promise<{
 	if (logo) {
 		if (logo.type === "url") return { url: logo.value };
 		if (logo.type === "image") {
-			const info = await getLocalImageInfo(logo.value, "", siteConfig.site_url);
-			return info
-				? { url: info.url, width: info.width, height: info.height }
-				: null;
+			return toAbsoluteImageInfo(logo.value, "", siteConfig.site_url);
 		}
 		// icon 类型无图片 URL → 落到 favicon 兜底
 	}

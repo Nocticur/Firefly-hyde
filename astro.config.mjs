@@ -1,5 +1,6 @@
 import managedRedirects from "./src/constants/managed-redirects.json" with { type: "json" };
 import { setMaxListeners } from "node:events";
+import { fileURLToPath } from "node:url";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -32,6 +33,7 @@ import {
 	expressiveCodeConfig,
 	fontConfig,
 	fontsList,
+	live2dWidgetConfig,
 	mermaidConfig,
 	plantumlConfig,
 	siteConfig,
@@ -166,6 +168,7 @@ export default defineConfig({
 		}),
 		expressiveCode({
 			themes: [expressiveCodeConfig.darkTheme, expressiveCodeConfig.lightTheme],
+			shiki: { langAlias: { env: "dotenv" } },
 			useDarkModeMediaQuery: false,
 			themeCssSelector: (theme) => `[data-theme='${theme.name}']`,
 			plugins: [
@@ -361,18 +364,46 @@ export default defineConfig({
 	},
 	vite: {
 		plugins: [tailwindcss()],
+		define: {
+			__FIREFLY_LIVE2D_ENABLED__: JSON.stringify(live2dWidgetConfig.enable),
+		},
 		server: {
 			watch: {
 				ignored: ["**/package/**", "**/Firefly-docs/**"],
 			},
 		},
 		resolve: {
-			alias: {
-				"@rehype-callouts-theme": `rehype-callouts/theme/${siteConfig.post.rehypeCallouts.theme}`,
-			},
+			alias: [
+				{
+					find: "@rehype-callouts-theme",
+					replacement: `rehype-callouts/theme/${siteConfig.post.rehypeCallouts.theme}`,
+				},
+				// Split Three.js source modules; its prebundled core cannot be split.
+				{
+					find: /^three$/,
+					replacement: fileURLToPath(new URL("./node_modules/three/src/Three.js", import.meta.url)),
+				},
+			],
 		},
 		build: {
 			minify: "esbuild",
+			rolldownOptions: {
+				output: {
+					codeSplitting: {
+						groups: [
+							{
+								name: "three-base",
+								// Keep cyclic math dependencies and base classes together.
+								test: /[\\/]node_modules[\\/]three[\\/]src[\\/](?:math[\\/]|core[\\/]EventDispatcher\.js$|(?:constants|utils)\.js$)/,
+							},
+							{
+								name: "three-materials",
+								test: /[\\/]node_modules[\\/]three[\\/]src[\\/](?:materials[\\/]|renderers[\\/]shaders[\\/])/,
+							},
+						],
+					},
+				},
+			},
 			esbuildOptions: {
 				minify: true,
 				// 删除 debugger 语句；console.log / console.debug 无副作用，未使用返回值时会被 dead code elimination 移除，

@@ -40,6 +40,8 @@ jobs:
         run: node --test workers/blog.test.js
       - name: Test release manifest and draft isolation
         run: pnpm test:release
+      - name: Test inline scripts and deployment validation
+        run: pnpm test:build-processing
       - name: Build complete static site and search index
         # Workers Builds deploys this static output; the frontend uses no SSR adapter.
         run: env -u CF_WORKERS -u BUILD_ADMIN pnpm build

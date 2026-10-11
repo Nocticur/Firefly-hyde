@@ -109,8 +109,10 @@ test("invalid manifests and unavailable public backends fail without caching", a
 	assertNoStore(failed);
 });
 
-test("ordinary static pages retain asset caching and old login cannot issue a session", async () => {
-	const response = await worker.fetch(request("/posts/AbC/"), bindings({ ASSETS: { fetch: async () => new Response("static", { headers: { "Cache-Control": "max-age=3600" } }) } }));
+test("ordinary static pages work without ADMIN and retired login cannot issue a session", async () => {
+	const response = await worker.fetch(request("/posts/AbC/"), bindings({ ADMIN: undefined, ASSETS: { fetch: async () => new Response("static", { headers: { "Cache-Control": "max-age=3600" } }) } }));
+	assert.equal(response.status, 200);
+	assert.equal(await response.text(), "static");
 	assert.equal(response.headers.get("Cache-Control"), "max-age=3600");
 	const login = await retiredLogin({ request: request("/api/auth/login", { method: "POST", body: "invalid" }), env: {} });
 	assert.equal(login.status, 410);

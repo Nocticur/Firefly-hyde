@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "nocticur-firefly-hyde-blog",
+	"name": "firefly-hyde",
 	"main": "workers/blog.js",
 	"compatibility_date": "2026-07-01",
 	"version_metadata": { "binding": "VERSION" },
@@ -10,10 +10,19 @@
 		"run_worker_first": true,
 		"not_found_handling": "404-page"
 	},
-	"services": [
-		{
-			"binding": "ADMIN",
-			"service": "nocticur-firefly-hyde-admin"
+	// The existing blog can deploy before the separate administration Worker exists.
+	// Public interaction routes return 503 until the production binding is enabled.
+	"services": [],
+	"env": {
+		"production": {
+			"name": "firefly-hyde",
+			"version_metadata": { "binding": "VERSION" },
+			"services": [
+				{
+					"binding": "ADMIN",
+					"service": "nocticur-firefly-hyde-admin"
+				}
+			]
 		}
-	]
+	}
 }

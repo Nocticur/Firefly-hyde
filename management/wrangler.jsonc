@@ -18,7 +18,7 @@
     "BLOG_ORIGIN": "http://localhost:4321",
     "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
     "GITHUB_BRANCH": "main",
-    "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog"
+    "BLOG_WORKER_NAME": "firefly-hyde"
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "nocticur-admin-development", "migrations_dir": "migrations", "remote": false }
@@ -65,7 +65,8 @@
         "MEDIA_ORIGIN": "https://media.mourn.top",
         "GITHUB_REPOSITORY": "Nocticur/Firefly-hyde",
         "GITHUB_BRANCH": "main",
-        "BLOG_WORKER_NAME": "nocticur-firefly-hyde-blog",
+        "BLOG_WORKER_NAME": "firefly-hyde",
+        "GITHUB_BUILD_CHECK_NAME": "Workers Builds: firefly-hyde",
         "GITHUB_BUILD_CHECK_APP_ID": "85455",
         "BACKUP_PREFIX": "backups/"
       },

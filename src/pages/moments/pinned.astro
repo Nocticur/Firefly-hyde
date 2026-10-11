@@ -1,6 +1,8 @@
 ---
+import { getImage } from "astro:assets";
 import { getCollection } from "astro:content";
 import { Icon } from "astro-icon/components";
+import pinnedBackground from "@/assets/images/DesktopWallpaper/xueshan.webp";
 import Comment from "@/components/comment/index.astro";
 import MomentCard from "@/components/moments/MomentCard.astro";
 import { externalMomentsConfig } from "@/config/externalMomentsConfig";
@@ -12,11 +14,17 @@ const moments = externalMomentsConfig.localContentEnabled
 const pinnedMoments = moments
 	.filter((m) => m.data.pinned)
 	.sort((a, b) => b.data.published.getTime() - a.data.published.getTime());
+const headerBackground = await getImage({
+	src: pinnedBackground,
+	width: 1280,
+	format: "webp",
+	quality: 80,
+});
 ---
 
 <MainGridLayout title="置顶说说" description="我置顶的说说合集">
   <!-- 页面头部 -->
-  <div class="pinned-page-header">
+  <div class="pinned-page-header" style={{ backgroundImage: `url(${headerBackground.src})` }}>
     <div class="pinned-header-row">
       <a href="/moments/" class="back-btn">
         <Icon name="material-symbols:arrow-back-rounded" class="back-icon" />
@@ -79,7 +87,6 @@ const pinnedMoments = moments
   /* 页面头部 */
   .pinned-page-header {
     padding: 1rem 1rem ;
-    background-image: url(/assets/images/wallpapers/pinned-bg.webp);
     background-size: cover;
     background-position: center;
     border-radius: 1rem;

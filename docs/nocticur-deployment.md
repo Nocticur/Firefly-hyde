@@ -1,6 +1,6 @@
 # Nocticur / Firefly-hyde 的 Cloudflare 部署与管理
 
-本次只实施 `Nocticur/Firefly-hyde`，发布分支为 `main`。博客是 Astro 静态站点，由 `nocticur-firefly-hyde-blog` Worker 托管；React 管理界面与 Hono API 由独立的 `nocticur-firefly-hyde-admin` Worker 托管。目标域名分别为 `blog.mourn.top`、`admin.mourn.top`，公开媒体为 `media.mourn.top`。仓库配置和本地验收不表示这些生产资源已创建或域名已切换。
+本次只实施 `Nocticur/Firefly-hyde`，发布分支为 `main`。博客是 Astro 静态站点，使用已接入 Workers Builds 的 `firefly-hyde` Worker；React 管理界面与 Hono API 由独立的 `nocticur-firefly-hyde-admin` Worker 托管。目标域名分别为 `blog.mourn.top`、`admin.mourn.top`，公开媒体为 `media.mourn.top`。仓库配置和本地验收不表示管理生产资源已创建或域名已切换。
 
 ## 资料与文章基线
 
@@ -20,6 +20,7 @@ pnpm dev
 pnpm check
 pnpm type-check
 pnpm test:release
+pnpm test:build-processing
 node --test workers/blog.test.js
 pnpm build
 ```
@@ -43,7 +44,9 @@ pnpm exec wrangler deploy --dry-run --env production
 
 ## Worker 路由与旧服务隔离
 
-博客 `wrangler.jsonc` 的 `ASSETS` 指向完整 `dist`，`ADMIN` 服务绑定指向独立管理 Worker。只有 `/api/public/*` 转发到管理服务，保留方法、正文及 Origin，剥离 Cookie 和 Authorization。既有静态 `/api/allPostMeta.json`、`/api/dynamic.json` 等仍由 ASSETS 只读提供，其他管理 API 不会借博客代理。
+博客 `wrangler.jsonc` 的 `ASSETS` 指向完整 `dist`。默认部署不声明尚未创建的 `ADMIN` 服务绑定，博客静态页面和搜索可独立上线；此时 `/api/public/*` 返回不可缓存的 503，评论/友链等后台接口尚不可用，不会伪造成功或转发到其他服务。
+
+创建并验收管理生产 Worker 后，使用 `pnpm deploy:blog --with-admin`，启用同一 `firefly-hyde` Worker 的 `env.production.services`。该显式配置保留 `ADMIN` 绑定及 `VERSION` 元数据；不要在管理 Worker 不存在时启用，否则 Cloudflare 返回 10143。只有 `/api/public/*` 转发到管理服务，保留方法、正文及 Origin，剥离 Cookie 和 Authorization。既有静态 `/api/allPostMeta.json`、`/api/dynamic.json` 等仍由 ASSETS 只读提供，其他管理 API 不会借博客代理。
 
 管理 Worker 先处理 `/api/*`，包括鉴权失败及未知 API 的 JSON 错误；只有非 API 路径进入 `ui/dist` 的 SPA 回退。API、发布清单及私有预览禁缓存。博客 `/release-manifest.json` 注入平台 `VERSION.id`；本地缺少此绑定时为 `null`，不猜测生产版本。
 
@@ -72,27 +75,29 @@ pnpm exec wrangler deploy --dry-run --env production
 
 ## 变量、凭据及平台设置
 
-生产变量：`PLATFORM=cloudflare`、`ENVIRONMENT=production`、`ADMIN_ORIGIN=https://admin.mourn.top`、`BLOG_ORIGIN=https://blog.mourn.top`、`MEDIA_ORIGIN=https://media.mourn.top`、`GITHUB_REPOSITORY=Nocticur/Firefly-hyde`、`GITHUB_BRANCH=main`、`BLOG_WORKER_NAME=nocticur-firefly-hyde-blog`。管理员固定绑定已从 GitHub 公开用户接口验证的 Nocticur 数字 ID：`ADMIN_GITHUB_USER_ID=285582250`。
+生产变量：`PLATFORM=cloudflare`、`ENVIRONMENT=production`、`ADMIN_ORIGIN=https://admin.mourn.top`、`BLOG_ORIGIN=https://blog.mourn.top`、`MEDIA_ORIGIN=https://media.mourn.top`、`GITHUB_REPOSITORY=Nocticur/Firefly-hyde`、`GITHUB_BRANCH=main`、`BLOG_WORKER_NAME=firefly-hyde`。管理员固定绑定已从 GitHub 公开用户接口验证的 Nocticur 数字 ID：`ADMIN_GITHUB_USER_ID=285582250`。
 
 平台安全设置还需提供 GitHub OAuth 客户端 ID/密钥、GitHub App ID/安装 ID/私钥、Cloudflare 账号 ID及可查询博客生产版本的 API token、Turnstile site key/secret、`IP_HASH_SECRET`、Resend API key 和已验证的 `MAIL_FROM`。OAuth 回调固定为 `https://admin.mourn.top/api/auth/github/callback`。凭据值不写入 Git、静态产物或聊天；已有 Git 读取认证不等同于后台所需的 GitHub App 发布授权。
 
-云编辑环境与生产 Worker 的配置分别管理。当前云环境的 Wrangler 明确报告未认证，账号、Worker、D1、R2 和 Queue 尚未远端盘点。环境草稿已声明 `CLOUDFLARE_API_TOKEN`，限定 HTTPS 目的地 `api.cloudflare.com`；在环境设置中安全填写，保存并发布后重新检查认证。先读取实际资源和域名绑定，确认是否复用既有 `firefly-hyde`，再填写真实资源 ID 与目标 Worker 名称。代理占位凭据只通过指定 HTTPS 目的地使用，不提取或复制到生产配置；生产 Worker 的 secrets 仍需在 Cloudflare 安全设置中独立配置。
+云编辑环境与生产 Worker 的配置分别管理。当前云环境的 Wrangler 明确报告未认证，D1、R2 和 Queue 尚未远端盘点。环境草稿已声明 `CLOUDFLARE_API_TOKEN`，限定 HTTPS 目的地 `api.cloudflare.com`；在环境设置中安全填写，保存并发布后重新检查认证。用户提供的生产构建日志已确认现有博客 Worker 为 `firefly-hyde`，并确认该次部署找不到管理 Worker；真实数据库、桶、队列及域名绑定仍需认证核验。代理占位凭据只通过指定 HTTPS 目的地使用，不提取或复制到生产配置；生产 Worker 的 secrets 仍需在 Cloudflare 安全设置中独立配置。
 
 GitHub App 仅安装到目标仓库，权限为 Contents 写入、Checks 只读及 GitHub 默认 Metadata 读取。生产还必须配置非秘密变量 `GITHUB_BUILD_CHECK_NAME` 和 `GITHUB_BUILD_CHECK_APP_ID`：从目标仓库真实 Workers Builds 集成的 GitHub Check 记录读取精确 `name` 及数字 `app.id`，不猜名称/ID，不复用旧部署通道的 Check。可用已配置的仓库读取授权查询官方 `GET /repos/Nocticur/Firefly-hyde/commits/<完整目标SHA>/check-runs`；名称与 App ID 尚未确认时后台不具备生产发布就绪条件。GitHub App 安装令牌按仓库限制并请求 `checks:read`，管理 UI 不持有此令牌。
 
-只读查询仓库当前远端 `ea8b173a9e495b343cb38794270c1274fc7f72d4` 已确认官方 App `cloudflare-workers-and-pages` 的数字 ID 为 `85455`，示例配置及生产变量已填入此公开值。该提交的既有 Check 名为 `Workers Builds: firefly-hyde`；本配置的博客 Worker 名为 `nocticur-firefly-hyde-blog`，因此没有直接套用既有 Check 名。将目标 Worker 接入 Workers Builds 后，还需从该目标的真实记录设置精确 `GITHUB_BUILD_CHECK_NAME`。这项观察不证明本次代码已部署或目标管理资源已存在。
+真实 GitHub Check 及生产日志确认现有集成为官方 `cloudflare-workers-and-pages`，App ID 为 `85455`，Check 名为 `Workers Builds: firefly-hyde`。本配置复用该博客 Worker，后台生产应设置 `GITHUB_BUILD_CHECK_NAME=Workers Builds: firefly-hyde`、`GITHUB_BUILD_CHECK_APP_ID=85455`、`BLOG_WORKER_NAME=firefly-hyde`。若以后更换 Worker 或构建集成，必须重新核对这三项；不能用任意成功的 GitHub Actions 替代官方部署 Check。
 
-该官方 Check 的 Cloudflare Dashboard 详情路径指向候选账号 `ac487e9ee99d9e32a54e72026bae4871` 下的 `firefly-hyde/production`。这是后续只读盘点的线索；需用已授权 Cloudflare 认证确认资源和域名绑定，再决定复用该 Worker 或采用上述新名称，不能仅凭详情 URL 填入生产账号、D1 或域名配置。
+用户提供的日志中，部署请求指向账号 `ac487e9ee99d9e32a54e72026bae4871` 下的 `firefly-hyde`。它证明这次部署的目标，仍需认证核验账号归属、实际资源和域名；没有根据日志虚构 D1 ID 或自动创建管理资源。
 
 R2 公开桶的媒体域名在实际配置完成后接到 `media.mourn.top`；私有桶不绑定公开读取域名。生产、预览和开发的数据、媒体及凭据分别配置。
 
-博客 Workers Builds 连接 `main`，安装使用冻结锁文件，构建使用完整 `pnpm build`。部署命令必须把完整 Git SHA 写入 Worker tag，供后台核验真实生产版本：
+博客 Workers Builds 连接 `main`，安装使用冻结锁文件，构建使用完整 `pnpm build`。在 Cloudflare 的 Settings → Builds 将 Deploy command 设置为下列命令，替换日志中的 `npx wrangler deploy`，确保完整 Git SHA 写入 Worker tag：
 
 ```bash
-pnpm exec wrangler deploy --tag "$WORKERS_CI_COMMIT_SHA"
+pnpm deploy:blog
 ```
 
-`WORKERS_CI_COMMIT_SHA` 必须是本次完整构建对应的 40 位 Git SHA；本地授权部署时从当前干净 checkout 获取 SHA。不能填任务 ID、短 SHA、固定示例或不同 checkout 的 SHA。管理 Worker 独立构建 UI 并以 `--env production` 部署，后台升级不替代博客内容发布。
+部署脚本使用已安装的 Wrangler，并校验 `WORKERS_CI_COMMIT_SHA`（本地使用 HEAD）、当前 checkout 和 release manifest 的完整 SHA 一致，源码与 manifest 均为干净状态，再传入 `--tag`。不接受短 SHA、固定示例、不同 checkout 或过期产物。`pnpm deploy:blog --dry-run` 只打包，不部署。
+
+管理 Worker 的 DB、R2、Queues 和 Secrets 配置完成，独立构建 UI 并以 `--env production` 部署、验收后，再把博客 Deploy command 改为 `pnpm deploy:blog --with-admin`，恢复真实后台互动服务。该命令仍部署同一个 `firefly-hyde`，不会创建另一个后缀 Worker。接入后后续自动构建也必须保留 `--with-admin`，以免移除该服务绑定。
 
 ## 发布、任务和备份
 
@@ -116,4 +121,4 @@ pnpm exec wrangler deploy --tag "$WORKERS_CI_COMMIT_SHA"
 
 内容回滚使用 Git revert 后完整重建，并重新核验生产清单。Worker 代码版本回滚、D1 数据恢复和 R2 资源恢复分别操作。迁移前 Git bundle、源码压缩包和 SHA256 校验报告保存在 `/workspace/.deployment-plan/backups/`。
 
-本次没有执行创建云资源、推送、部署或域名切换。最终上线仍需真实 D1 ID、已创建的 R2/Queues、已配置凭据、实际平台验收和明确的生产切换授权。
+仓库修复、GitHub 构建和本地 dry-run 分别记录验证结果，不能替代生产验收。博客独立部署不要求先创建后台；后台上线仍需真实 D1 ID、已创建的 R2/Queues、已配置凭据及实际平台验收。若修复后仍需重建旧 Worker，范围仅限已核验归属的 `firefly-hyde`，先记录它的路由、域名、构建设置和当前版本；保留其他项目，以及 D1、R2、Queues 等关联资源。
